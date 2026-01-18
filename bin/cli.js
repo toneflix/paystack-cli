@@ -1,5 +1,8 @@
 #!/usr/bin/env node
+import path, { dirname } from "path";
 import Database from "better-sqlite3";
+import { fileURLToPath } from "url";
+import { mkdirSync } from "fs";
 import { Logger } from "@h3ravel/shared";
 import axios from "axios";
 import { Command, Kernel } from "@h3ravel/musket";
@@ -8,11 +11,33 @@ import crypto from "crypto";
 import ngrok from "@ngrok/ngrok";
 
 //#region src/db.ts
-const db = new Database("app.db");
-db.pragma("journal_mode = WAL");
-function init(table = "json_store") {
-	return db.exec(`
-        CREATE TABLE IF NOT EXISTS ${table} (
+let db;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dirPath = path.normalize(path.join(__dirname, "..", "data"));
+mkdirSync(dirPath, { recursive: true });
+/**
+* Hook to get or set the database instance.
+* 
+* @returns 
+*/
+const useDb = () => {
+	return [() => db, (newDb) => {
+		db = newDb;
+		const [{ journal_mode }] = db.pragma("journal_mode");
+		if (journal_mode !== "wal") db.pragma("journal_mode = WAL");
+	}];
+};
+const [getDatabase, setDatabase] = useDb();
+setDatabase(new Database(path.join(dirPath, "app.db")));
+/**
+* Initialize the database
+* 
+* @param table 
+* @returns 
+*/
+function init() {
+	return getDatabase().exec(`
+        CREATE TABLE IF NOT EXISTS json_store (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key TEXT UNIQUE,
             value TEXT
@@ -26,16 +51,24 @@ function init(table = "json_store") {
 * @param value 
 * @returns 
 */
-function write(key, value, table = "json_store") {
+function write(key, value) {
+	const db$1 = getDatabase();
 	if (typeof value === "boolean") value = value ? "1" : "0";
 	if (value instanceof Object) value = JSON.stringify(value);
-	return db.prepare(`INSERT INTO ${table} (key, value)
+	return db$1.prepare(`INSERT INTO json_store (key, value)
         VALUES (?, ?)
         ON CONFLICT(key) DO UPDATE SET value=excluded.value
     `).run(key, value).lastInsertRowid;
 }
-function remove(key, table = "json_store") {
-	return db.prepare(`DELETE FROM ${table} WHERE key = ?`).run(key).lastInsertRowid;
+/**
+* Remove a value from the database
+* 
+* @param key 
+* @param table 
+* @returns 
+*/
+function remove(key) {
+	return getDatabase().prepare("DELETE FROM json_store WHERE key = ?").run(key).lastInsertRowid;
 }
 /**
 * Read a value from the database
@@ -43,13 +76,16 @@ function remove(key, table = "json_store") {
 * @param key 
 * @returns 
 */
-function read(key, table = "json_store") {
-	const row = db.prepare(`SELECT * FROM ${table} WHERE key = ?`).get(key);
-	if (row) try {
-		return JSON.parse(row.value);
-	} catch {
-		return row.value;
-	}
+function read(key) {
+	const db$1 = getDatabase();
+	try {
+		const row = db$1.prepare("SELECT * FROM json_store WHERE key = ?").get(key);
+		if (row) try {
+			return JSON.parse(row.value);
+		} catch {
+			return row.value;
+		}
+	} catch {}
 	return null;
 }
 
@@ -230,7 +266,7 @@ async function executeSchema(schema, options) {
 		if (schema.method == "GET") params = options;
 		if (schema.method == "POST") data = options;
 		const pathVars = [...schema.endpoint.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
-		if (pathVars.length >= 0) for (const path of pathVars) schema.endpoint = schema.endpoint.replace("{" + path + "}", options[path]);
+		if (pathVars.length >= 0) for (const path$1 of pathVars) schema.endpoint = schema.endpoint.replace("{" + path$1 + "}", options[path$1]);
 		const url = new URL(schema.endpoint, config.apiBaseURL || "https://api.paystack.co");
 		params = {
 			...params,

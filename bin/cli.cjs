@@ -22,8 +22,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 }) : target, mod));
 
 //#endregion
+let path = require("path");
+path = __toESM(path);
 let better_sqlite3 = require("better-sqlite3");
 better_sqlite3 = __toESM(better_sqlite3);
+let url = require("url");
+url = __toESM(url);
+let fs = require("fs");
+fs = __toESM(fs);
 let __h3ravel_shared = require("@h3ravel/shared");
 __h3ravel_shared = __toESM(__h3ravel_shared);
 let axios = require("axios");
@@ -38,11 +44,33 @@ let __ngrok_ngrok = require("@ngrok/ngrok");
 __ngrok_ngrok = __toESM(__ngrok_ngrok);
 
 //#region src/db.ts
-const db = new better_sqlite3.default("app.db");
-db.pragma("journal_mode = WAL");
-function init(table = "json_store") {
-	return db.exec(`
-        CREATE TABLE IF NOT EXISTS ${table} (
+let db;
+const __dirname$1 = (0, path.dirname)((0, url.fileURLToPath)(require("url").pathToFileURL(__filename).href));
+const dirPath = path.default.normalize(path.default.join(__dirname$1, "..", "data"));
+(0, fs.mkdirSync)(dirPath, { recursive: true });
+/**
+* Hook to get or set the database instance.
+* 
+* @returns 
+*/
+const useDb = () => {
+	return [() => db, (newDb) => {
+		db = newDb;
+		const [{ journal_mode }] = db.pragma("journal_mode");
+		if (journal_mode !== "wal") db.pragma("journal_mode = WAL");
+	}];
+};
+const [getDatabase, setDatabase] = useDb();
+setDatabase(new better_sqlite3.default(path.default.join(dirPath, "app.db")));
+/**
+* Initialize the database
+* 
+* @param table 
+* @returns 
+*/
+function init() {
+	return getDatabase().exec(`
+        CREATE TABLE IF NOT EXISTS json_store (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key TEXT UNIQUE,
             value TEXT
@@ -56,16 +84,24 @@ function init(table = "json_store") {
 * @param value 
 * @returns 
 */
-function write(key, value, table = "json_store") {
+function write(key, value) {
+	const db$1 = getDatabase();
 	if (typeof value === "boolean") value = value ? "1" : "0";
 	if (value instanceof Object) value = JSON.stringify(value);
-	return db.prepare(`INSERT INTO ${table} (key, value)
+	return db$1.prepare(`INSERT INTO json_store (key, value)
         VALUES (?, ?)
         ON CONFLICT(key) DO UPDATE SET value=excluded.value
     `).run(key, value).lastInsertRowid;
 }
-function remove(key, table = "json_store") {
-	return db.prepare(`DELETE FROM ${table} WHERE key = ?`).run(key).lastInsertRowid;
+/**
+* Remove a value from the database
+* 
+* @param key 
+* @param table 
+* @returns 
+*/
+function remove(key) {
+	return getDatabase().prepare("DELETE FROM json_store WHERE key = ?").run(key).lastInsertRowid;
 }
 /**
 * Read a value from the database
@@ -73,13 +109,16 @@ function remove(key, table = "json_store") {
 * @param key 
 * @returns 
 */
-function read(key, table = "json_store") {
-	const row = db.prepare(`SELECT * FROM ${table} WHERE key = ?`).get(key);
-	if (row) try {
-		return JSON.parse(row.value);
-	} catch {
-		return row.value;
-	}
+function read(key) {
+	const db$1 = getDatabase();
+	try {
+		const row = db$1.prepare("SELECT * FROM json_store WHERE key = ?").get(key);
+		if (row) try {
+			return JSON.parse(row.value);
+		} catch {
+			return row.value;
+		}
+	} catch {}
 	return null;
 }
 
@@ -260,14 +299,14 @@ async function executeSchema(schema, options) {
 		if (schema.method == "GET") params = options;
 		if (schema.method == "POST") data = options;
 		const pathVars = [...schema.endpoint.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
-		if (pathVars.length >= 0) for (const path of pathVars) schema.endpoint = schema.endpoint.replace("{" + path + "}", options[path]);
-		const url = new URL(schema.endpoint, config.apiBaseURL || "https://api.paystack.co");
+		if (pathVars.length >= 0) for (const path$2 of pathVars) schema.endpoint = schema.endpoint.replace("{" + path$2 + "}", options[path$2]);
+		const url$1 = new URL(schema.endpoint, config.apiBaseURL || "https://api.paystack.co");
 		params = {
 			...params,
-			...Object.fromEntries(url.searchParams.entries())
+			...Object.fromEntries(url$1.searchParams.entries())
 		};
 		axios_default.request({
-			url: url.pathname,
+			url: url$1.pathname,
 			method: schema.method,
 			params,
 			data,
@@ -2895,10 +2934,10 @@ async function refreshIntegration() {
 * @param domain 
 * @returns 
 */
-function setWebhook(url, token, integrationId, domain = "test") {
+function setWebhook(url$1, token, integrationId, domain = "test") {
 	return new Promise((resolve, reject) => {
 		const data = {
-			[domain + "_webhook_endpoint"]: url,
+			[domain + "_webhook_endpoint"]: url$1,
 			integration: integrationId
 		};
 		axios_default.put("/integration/webhooks", data, { headers: {
@@ -2908,7 +2947,7 @@ function setWebhook(url, token, integrationId, domain = "test") {
 			const integration = read("selected_integration");
 			write("selected_integration", {
 				...integration,
-				[domain + "_webhook_endpoint"]: url
+				[domain + "_webhook_endpoint"]: url$1
 			});
 			resolve(resp.data.message);
 		}).catch((err) => {
@@ -3209,16 +3248,16 @@ var WebhookCommand = class extends __h3ravel_musket.Command {
 				this.error("ERROR: Your session has expired. Please run the `login` command to sign in again.");
 				return;
 			}
-			const url = parseURL(local_route);
-			if (!url.port) url.port = "8000";
-			if (!url.search || url.search == "?") url.search = "";
+			const url$1 = parseURL(local_route);
+			if (!url$1.port) url$1.port = "8000";
+			if (!url$1.search || url$1.search == "?") url$1.search = "";
 			try {
 				await __ngrok_ngrok.default.kill();
 			} catch {
 				this.debug("No existing ngrok process found to kill.");
 			}
 			const ngrokURL = (await __ngrok_ngrok.default.forward({
-				addr: url.port,
+				addr: url$1.port,
 				authtoken: config.ngrokAuthToken || process.env.NGROK_AUTH_TOKEN,
 				domain: process.env.NGROK_DOMAIN
 			})).url();
