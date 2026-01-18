@@ -8,14 +8,14 @@ let commandInstance: Command | undefined
 /**
  * Hook to get or set the current Command instance.
  */
-export function useCommand (): [() => Command, (newCommand: Command) => void] {
+export function useCommand () {
     return [
         () => {
             if (!commandInstance) {
                 throw new Error('Commander instance has not been initialized')
             }
-            
-return commandInstance
+
+            return commandInstance
         },
         (newCommand: Command) => {
             commandInstance = newCommand
@@ -39,8 +39,8 @@ export function useConfig () {
         },
         (config: IConfig): IConfig => {
             write('config', config)
-            
-return read('config')
+
+            return read('config')
         },
     ] as const
 }
@@ -59,15 +59,15 @@ export function useShortcuts () {
         (shortcut?: string): boolean => {
             if (!shortcut) {
                 shortcutUsed.clear()
-                
-return false
+
+                return false
             }
             if (shortcutUsed.has(shortcut)) {
                 return false
             }
             shortcutUsed.add(shortcut)
-            
-return true
+
+            return true
         },
     ] as const
 }

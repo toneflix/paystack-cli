@@ -1,12 +1,38 @@
 import Database from 'better-sqlite3'
 import { XGeneric } from './Contracts/Generic'
 
-const db = new Database('app.db')
-db.pragma('journal_mode = WAL')
+let db: Database.Database
 
-export function init (table = 'json_store') {
+/**
+ * Hook to get or set the database instance.
+ * 
+ * @returns 
+ */
+export const useDb = () => {
+    return [
+        () => db,
+        (newDb: Database.Database) => {
+            db = newDb
+            db.pragma('journal_mode = WAL')
+        },
+    ] as const
+}
+
+const [getDatabase, setDatabase] = useDb()
+
+setDatabase(new Database('app.db'))
+
+/**
+ * Initialize the database
+ * 
+ * @param table 
+ * @returns 
+ */
+export function init () {
+    const db = getDatabase()
+
     return db.exec(`
-        CREATE TABLE IF NOT EXISTS ${table} (
+        CREATE TABLE IF NOT EXISTS json_store (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key TEXT UNIQUE,
             value TEXT
@@ -21,13 +47,15 @@ export function init (table = 'json_store') {
  * @param value 
  * @returns 
  */
-export function write (key: string, value: any, table = 'json_store') {
+export function write (key: string, value: any,) {
+    const db = getDatabase()
+
     if (typeof value === 'boolean')
         value = value ? '1' : '0'
     if (value instanceof Object)
         value = JSON.stringify(value)
 
-    const insert = db.prepare(`INSERT INTO ${table} (key, value)
+    const insert = db.prepare(`INSERT INTO json_store (key, value)
         VALUES (?, ?)
         ON CONFLICT(key) DO UPDATE SET value=excluded.value
     `)
@@ -38,8 +66,17 @@ export function write (key: string, value: any, table = 'json_store') {
     ).lastInsertRowid
 }
 
-export function remove (key: string, table = 'json_store') {
-    const insert = db.prepare(`DELETE FROM ${table} WHERE key = ?`)
+/**
+ * Remove a value from the database
+ * 
+ * @param key 
+ * @param table 
+ * @returns 
+ */
+export function remove (key: string,) {
+    const db = getDatabase()
+
+    const insert = db.prepare('DELETE FROM json_store WHERE key = ?')
 
     return insert.run(
         key,
@@ -49,8 +86,10 @@ export function remove (key: string, table = 'json_store') {
 /** 
  * Clear all values from the database
  */
-export function clear (table = 'json_store') {
-    const insert = db.prepare(`DELETE FROM ${table}`)
+export function clear () {
+    const db = getDatabase()
+
+    const insert = db.prepare('DELETE FROM json_store')
 
     return insert.run().changes
 }
@@ -60,9 +99,11 @@ export function clear (table = 'json_store') {
  * 
  * @returns 
  */
-export function keys (table = 'json_store') {
+export function keys () {
+    const db = getDatabase()
+
     const rows = db
-        .prepare(`SELECT key FROM ${table}`)
+        .prepare('SELECT key FROM json_store')
         .all() as { key: string }[]
 
     return rows.map(row => row.key)
@@ -73,9 +114,11 @@ export function keys (table = 'json_store') {
  * 
  * @returns 
  */
-export function getData (table = 'json_store') {
+export function getData () {
+    const db = getDatabase()
+
     const rows = db
-        .prepare(`SELECT * FROM ${table}`)
+        .prepare('SELECT * FROM json_store')
         .all() as { key: string, value: string }[]
 
     const data: XGeneric = {}
@@ -96,9 +139,11 @@ export function getData (table = 'json_store') {
  * @param key 
  * @returns 
  */
-export function read (key: string, table = 'json_store'): any {
+export function read (key: string,): any {
+    const db = getDatabase()
+
     const row = db
-        .prepare(`SELECT * FROM ${table} WHERE key = ?`)
+        .prepare('SELECT * FROM json_store WHERE key = ?')
         .get(key) as XGeneric | undefined
 
     if (row) {

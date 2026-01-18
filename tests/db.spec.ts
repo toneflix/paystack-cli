@@ -1,10 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { clear, init, keys, read, remove, write } from '../src/db'
+import { clear, init, keys, read, remove, useDb, write } from '../src/db'
 import { existsSync, unlinkSync } from 'fs'
+
+import Database from 'better-sqlite3'
 
 describe('Database Test', () => {
     beforeAll(() => {
-        init('testdb')
+        const [_, setDatabase] = useDb()
+        setDatabase(new Database('testdb.db'))
+        init()
     })
 
     beforeEach(() => {
@@ -14,6 +18,8 @@ describe('Database Test', () => {
     afterAll(() => {
         if (existsSync('testdb.db')) {
             unlinkSync('testdb.db')
+            unlinkSync('testdb.db-shm')
+            unlinkSync('testdb.db-wal')
         }
     })
 
