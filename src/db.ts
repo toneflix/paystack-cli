@@ -13,7 +13,12 @@ export const useDb = () => {
         () => db,
         (newDb: Database.Database) => {
             db = newDb
-            db.pragma('journal_mode = WAL')
+
+            // Check current journal mode
+            const [{ journal_mode }] = db.pragma('journal_mode') as [{ journal_mode: string }]
+            if (journal_mode !== 'wal') {
+                db.pragma('journal_mode = WAL')
+            }
         },
     ] as const
 }
