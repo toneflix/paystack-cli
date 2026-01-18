@@ -23,8 +23,8 @@ export default () => {
             const commandKey = key === schema.api ? key : `${key}:${schema.api}`
             acc[commandKey] = schema
         })
-        
-return acc
+
+        return acc
     }, {} as Record<string, XSchema>)
 
     for (const [key, schema] of Object.entries(entries)) {
@@ -47,11 +47,8 @@ return acc
                 const selected_integration = db.read('selected_integration')?.id
                 const user = db.read('user')?.id
 
-                if (!selected_integration || !user) {
-                    this.error('ERROR: You\'re not signed in, please run the [login] command before you begin').newLine()
-                    
-return
-                }
+                if (!selected_integration || !user)
+                    return void this.error('ERROR: You\'re not signed in, please run the [login] command before you begin').newLine()
 
                 this.newLine()
 

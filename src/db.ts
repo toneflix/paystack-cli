@@ -11,6 +11,9 @@ const __dirname = dirname(__filename)
 const dirPath = path.normalize(path.join(__dirname, '..', 'data'))
 mkdirSync(dirPath, { recursive: true })
 
+
+export const useDbPath = () => [dirPath] as const
+
 /**
  * Hook to get or set the database instance.
  * 

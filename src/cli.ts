@@ -2,6 +2,7 @@
 
 import Commands from './Commands/Commands'
 import { ConfigCommand } from './Commands/ConfigCommand'
+import { InfoCommand } from './Commands/InfoCommand'
 import { InitCommand } from './Commands/InitCommand'
 import { Kernel } from '@h3ravel/musket'
 import { LoginCommand } from './Commands/LoginCommand'
@@ -23,6 +24,7 @@ Kernel.init(new Application(), {
         console.error(config.debug ? exception : exception.message)
     },
     baseCommands: [
+        InfoCommand,
         InitCommand,
         LoginCommand,
         LogoutCommand,
