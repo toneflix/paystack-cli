@@ -7,7 +7,7 @@
 
 The Paystack CLI helps you build, test, and manage your Paystack integration right from the terminal. Interact with the Paystack API, test webhooks locally, and manage your integration settings without leaving your command line.
 
-📚 **[View Documentation](https://toneflix.github.io/PaystackCli/)**
+**[View Documentation](https://paystack.cli.toneflix.net)**
 
 ## Table of Contents
 
