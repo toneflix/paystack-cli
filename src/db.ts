@@ -1,7 +1,15 @@
+import path, { dirname } from 'path'
+
 import Database from 'better-sqlite3'
 import { XGeneric } from './Contracts/Generic'
+import { fileURLToPath } from 'url'
+import { mkdirSync } from 'fs'
 
 let db: Database.Database
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const dirPath = path.normalize(path.join(__dirname, '..', 'data'))
+mkdirSync(dirPath, { recursive: true })
 
 /**
  * Hook to get or set the database instance.
@@ -25,7 +33,7 @@ export const useDb = () => {
 
 const [getDatabase, setDatabase] = useDb()
 
-setDatabase(new Database('app.db'))
+setDatabase(new Database(path.join(dirPath, 'app.db')))
 
 /**
  * Initialize the database
@@ -147,17 +155,20 @@ export function getData () {
 export function read (key: string,): any {
     const db = getDatabase()
 
-    const row = db
-        .prepare('SELECT * FROM json_store WHERE key = ?')
-        .get(key) as XGeneric | undefined
+    try {
+        const row = db
+            .prepare('SELECT * FROM json_store WHERE key = ?')
+            .get(key) as XGeneric | undefined
 
-    if (row) {
-        try {
-            return JSON.parse(row.value) as XGeneric
-        } catch {
-            return row.value
+        if (row) {
+            try {
+                return JSON.parse(row.value) as XGeneric
+            } catch {
+                return row.value
+            }
         }
-    }
+
+    } catch { /** */ }
 
     return null
 } 
