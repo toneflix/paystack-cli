@@ -1,7 +1,9 @@
 import { Command, Kernel } from '@h3ravel/musket'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { init, useDb } from 'src/db'
 import { useCommand, useConfig, useShortcuts } from '../src/hooks'
 
+import Database from 'better-sqlite3'
 import path from 'path'
 
 class App {
@@ -11,6 +13,9 @@ class App {
 let app, program: any
 
 beforeAll(async () => {
+    const [_, setDatabase] = useDb()
+    setDatabase(new Database('testdb.db'))
+    init()
     app = new App()
     program = await Kernel.init(
         app,
