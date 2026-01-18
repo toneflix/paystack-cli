@@ -1,7 +1,7 @@
 {
     "name": "@toneflix/paystack-cli",
     "type": "module",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "Interact with the Paystack API, test webhooks locally, and manage your integration settings without leaving your command line.",
     "main": "bin/cli.js",
     "private": false,

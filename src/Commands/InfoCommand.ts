@@ -29,7 +29,7 @@ export class InfoCommand extends Command {
         }
 
         wait(500, () => {
-            spinner.stop()
+            spinner.succeed('Application Information Loaded.\n')
 
             const info = {
                 appVersion: pkg.version,
