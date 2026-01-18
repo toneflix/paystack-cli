@@ -8,7 +8,7 @@ export default defineConfig({
     head: [
         ['link', { rel: 'icon', href: '/favicon.ico' }],
         ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
-        ['meta', { name: 'theme-color', content: '#3eaf7c' }],
+        ['meta', { name: 'theme-color', content: '#07c4f9' }],
         ['meta', { name: 'description', content: 'Build, test, and manage your Paystack integration from the terminal' }],
         ['meta', { property: 'og:title', content: 'Paystack CLI' }],
         ['meta', { property: 'og:description', content: 'Build, test, and manage your Paystack integration from the terminal' }],
