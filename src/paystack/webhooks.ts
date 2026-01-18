@@ -1,4 +1,4 @@
-import { XEvent, XGeneric } from "src/Contracts/Generic";
+import { XEvent, XGeneric } from 'src/Contracts/Generic'
 
 const webhook: Record<XEvent, { event: XEvent; data: XGeneric }> = {
     'charge.success': {
@@ -175,6 +175,6 @@ const webhook: Record<XEvent, { event: XEvent; data: XGeneric }> = {
             created_at: '2017-12-01T08:51:37.000Z',
         },
     },
-};
+}
 
-export default webhook;
+export default webhook

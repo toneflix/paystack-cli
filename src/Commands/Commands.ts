@@ -1,17 +1,17 @@
-import * as db from '../db';
+import * as db from '../db'
 
-import { executeSchema, promiseWrapper } from 'src/helpers';
+import { executeSchema, promiseWrapper } from 'src/helpers'
 
-import APIs from '../paystack/apis';
-import { Command } from '@h3ravel/musket';
-import { XSchema } from '../Contracts/Generic';
-import { buildSignature } from 'src/utils/argument';
-import { dataRenderer } from '../utils/renderer';
-import ora from 'ora';
-import { useCommand } from '../hooks';
+import APIs from '../paystack/apis'
+import { Command } from '@h3ravel/musket'
+import { XSchema } from '../Contracts/Generic'
+import { buildSignature } from 'src/utils/argument'
+import { dataRenderer } from '../utils/renderer'
+import ora from 'ora'
+import { useCommand } from '../hooks'
 
 export default () => {
-    const commands: typeof Command[] = [];
+    const commands: typeof Command[] = []
 
     /**
      * We should map through the APIs and reduce all apis to a single key value pair
@@ -20,58 +20,60 @@ export default () => {
      */
     const entries = Object.entries(APIs).reduce((acc, [key, schemas]) => {
         schemas.forEach((schema) => {
-            const commandKey = key === schema.api ? key : `${key}:${schema.api}`;
-            acc[commandKey] = schema;
-        });
-        return acc;
-    }, {} as Record<string, XSchema>);
+            const commandKey = key === schema.api ? key : `${key}:${schema.api}`
+            acc[commandKey] = schema
+        })
+        
+return acc
+    }, {} as Record<string, XSchema>)
 
     for (const [key, schema] of Object.entries(entries)) {
         const args = schema.params.map(param => buildSignature(param, key)).join('\n')
 
         const command = class extends Command {
 
-            protected signature = `${key} \n${args}`;
-            protected description = schema.description || 'No description available.';
+            protected signature = `${key} \n${args}`
+            protected description = schema.description || 'No description available.'
 
             handle = async () => {
                 const [_, setCommand] = useCommand()
-                setCommand(this);
+                setCommand(this)
 
                 for (const param of schema.params)
                     if (param.required && !this.argument(param.parameter))
-                        return void this.newLine().error(`Missing required argument: ${param.parameter}`).newLine();
+                        return void this.newLine().error(`Missing required argument: ${param.parameter}`).newLine()
 
 
-                const selected_integration = db.read('selected_integration')?.id;
-                const user = db.read('user')?.id;
+                const selected_integration = db.read('selected_integration')?.id
+                const user = db.read('user')?.id
 
                 if (!selected_integration || !user) {
-                    this.error("ERROR: You're not signed in, please run the [login] command before you begin").newLine();
-                    return;
+                    this.error('ERROR: You\'re not signed in, please run the [login] command before you begin').newLine()
+                    
+return
                 }
 
-                this.newLine();
+                this.newLine()
 
-                const spinner = ora('Loading...\n').start();
+                const spinner = ora('Loading...\n').start()
 
-                let [err, result] = await promiseWrapper(
+                const [err, result] = await promiseWrapper(
                     executeSchema(schema, { ...this.options(), ...this.arguments() }),
-                );
+                )
 
                 if (err || !result) return void spinner.fail((err || 'An error occurred') + '\n')
 
-                spinner.succeed(result.message);
+                spinner.succeed(result.message)
 
-                this.newLine();
+                this.newLine()
 
-                dataRenderer(result.data);
+                dataRenderer(result.data)
 
-                this.newLine();
-            };
+                this.newLine()
+            }
         }
-        commands.push(command as unknown as typeof Command);
+        commands.push(command as unknown as typeof Command)
     }
 
-    return commands;
-};
+    return commands
+}

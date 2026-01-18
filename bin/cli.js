@@ -47,7 +47,7 @@ function read(key, table = "json_store") {
 	const row = db.prepare(`SELECT * FROM ${table} WHERE key = ?`).get(key);
 	if (row) try {
 		return JSON.parse(row.value);
-	} catch (e) {
+	} catch {
 		return row.value;
 	}
 	return null;
@@ -84,7 +84,7 @@ function useConfig() {
 		return read("config");
 	}];
 }
-let shortcutUsed = /* @__PURE__ */ new Set();
+const shortcutUsed = /* @__PURE__ */ new Set();
 /**
 * Hook to make command shortcuts unique across the application.
 * 
@@ -202,7 +202,7 @@ function getKeys$1(token, type = "secret", domain = "test") {
 			"jwt-auth": true
 		} }).then((response) => {
 			let key = {};
-			let keys = response.data.data;
+			const keys = response.data.data;
 			if (keys.length) {
 				for (let i = 0; i < keys.length; i++) if (keys[i].domain === domain && keys[i].type === type) {
 					key = keys[i];
@@ -222,7 +222,7 @@ function getKeys$1(token, type = "secret", domain = "test") {
 async function executeSchema(schema, options) {
 	let domain = "test";
 	if (options.domain) domain = options.domain;
-	let key = await getKeys$1(read("token"), "secret", domain);
+	const key = await getKeys$1(read("token"), "secret", domain);
 	const [getConfig] = useConfig();
 	const config = getConfig();
 	return new Promise((resolve, reject) => {
@@ -2402,7 +2402,7 @@ const buildSignature = (param, cmd) => {
 	const [_, setShortcut] = useShortcuts();
 	let signature = "";
 	if ((!param.required || param.default !== void 0 || param.type === "Boolean" || param.options) && param.paramType !== "path" && param.arg !== true) {
-		signature += `{--`;
+		signature += "{--";
 		if (setShortcut(cmd + ":" + param.parameter.charAt(0).toLowerCase())) signature += `${param.parameter.charAt(0).toLowerCase()}|`;
 		else {
 			const words = param.parameter.split(/[_-\s]/);
@@ -2411,18 +2411,18 @@ const buildSignature = (param, cmd) => {
 			}
 		}
 		signature += `${param.parameter}`;
-		if (param.type !== "Boolean") signature += param.default ? `=${param.default}` : `?`;
+		if (param.type !== "Boolean") signature += param.default ? `=${param.default}` : "?";
 		if (param.description) signature += ` : ${param.description}`;
 		if (param.options) {
 			const optionsStr = param.options.join(",");
 			signature += ` : ${optionsStr}`;
 		}
-		signature += `}`;
+		signature += "}";
 	} else {
 		signature += `{${param.parameter}`;
 		if (param.default) signature += `=${param.default}`;
 		if (param.description) signature += ` : ${param.description}`;
-		signature += `}`;
+		signature += "}";
 	}
 	return signature;
 };
@@ -2512,7 +2512,7 @@ var Commands_default = () => {
 				}
 				this.newLine();
 				const spinner = ora("Loading...\n").start();
-				let [err, result] = await promiseWrapper(executeSchema(schema, {
+				const [err, result] = await promiseWrapper(executeSchema(schema, {
 					...this.options(),
 					...this.arguments()
 				}));
@@ -2555,7 +2555,7 @@ const configChoices = (config) => {
 		{
 			name: "Reset Configuration",
 			value: "reset",
-			description: `Reset all configurations to default values`
+			description: "Reset all configurations to default values"
 		}
 	];
 };
@@ -2582,7 +2582,7 @@ const saveConfig = async (choice) => {
 //#endregion
 //#region src/Commands/ConfigCommand.ts
 var ConfigCommand = class extends Command {
-	signature = `config`;
+	signature = "config";
 	description = "Configure paystack cli";
 	async handle() {
 		const [_, setCommand] = useCommand();
@@ -2605,7 +2605,7 @@ var ConfigCommand = class extends Command {
 //#endregion
 //#region src/Commands/InitCommand.ts
 var InitCommand = class extends Command {
-	signature = `init`;
+	signature = "init";
 	description = "Initialize the application.";
 	async handle() {
 		const [_, setCommand] = useCommand();
@@ -2804,15 +2804,15 @@ var webhooks_default = webhook;
 * @param token 
 * @returns 
 */
-function selectIntegration(integrations, token) {
+async function selectIntegration(integrations, token) {
 	const [command] = useCommand();
-	return new Promise(async (resolve, reject) => {
-		const id = await command().choice("Choose an integration", integrations.map((e) => {
-			return {
-				value: e.id?.toString() || "",
-				name: e.business_name || ""
-			};
-		}));
+	const id = await command().choice("Choose an integration", integrations.map((e) => {
+		return {
+			value: e.id?.toString() || "",
+			name: e.business_name || ""
+		};
+	}));
+	return new Promise((resolve, reject) => {
 		const integration = integrations.find((i) => i.id?.toString() === id);
 		if (!integration) {
 			reject("Invalid integration selected");
@@ -2867,7 +2867,7 @@ async function refreshIntegration() {
 */
 function setWebhook(url, token, integrationId, domain = "test") {
 	return new Promise((resolve, reject) => {
-		let data = {
+		const data = {
 			[domain + "_webhook_endpoint"]: url,
 			integration: integrationId
 		};
@@ -2901,7 +2901,7 @@ function getKeys(token, type = "secret", domain = "test") {
 			"jwt-auth": true
 		} }).then((response) => {
 			let key = {};
-			let keys = response.data.data;
+			const keys = response.data.data;
 			if (keys.length) {
 				for (let i = 0; i < keys.length; i++) if (keys[i].domain === domain && keys[i].type === type) {
 					key = keys[i];
@@ -2925,22 +2925,22 @@ function getKeys(token, type = "secret", domain = "test") {
 * @param event 
 * @returns 
 */
-function pingWebhook(options, event = "charge.success") {
+async function pingWebhook(options, event = "charge.success") {
 	const [command] = useCommand();
-	return new Promise(async (resolve, reject) => {
-		let canProceed;
-		try {
-			canProceed = await refreshIntegration();
-		} catch (e) {
-			console.error(e);
-		}
+	let canProceed = false;
+	try {
+		canProceed = await refreshIntegration();
+	} catch (e) {
+		console.error(e);
+	}
+	let domain = "test";
+	if (options.domain) domain = options.domain;
+	if (options.event) event = options.event;
+	const key = await getKeys(read("token"), "secret", domain);
+	return new Promise((resolve, reject) => {
 		if (!canProceed) return void command().error("ERROR: Unable to ping webhook URL");
-		let domain = "test";
-		if (options.domain) domain = options.domain;
-		if (options.event) event = options.event;
-		let eventObject = webhooks_default[event];
+		const eventObject = webhooks_default[event];
 		if (eventObject) {
-			const key = await getKeys(read("token"), "secret", domain);
 			const hash = crypto.createHmac("sha512", key).update(JSON.stringify(eventObject)).digest("hex");
 			const uri = read("selected_integration")[domain + "_webhook_endpoint"];
 			const spinner = ora(`Sending sample ${event} event payload to ${uri}`).start();
@@ -2998,7 +2998,7 @@ function getIntegration(id, token) {
 */
 async function signIn(email, password) {
 	const [command] = useCommand();
-	const spinner = ora(`Logging in...`).start();
+	const spinner = ora("Logging in...").start();
 	try {
 		const { data: response } = await axios_default.post("/login", {
 			email,
@@ -3062,7 +3062,7 @@ function clearAuth() {
 //#endregion
 //#region src/Commands/LoginCommand.ts
 var LoginCommand = class extends Command {
-	signature = `login`;
+	signature = "login";
 	description = "Log in to paystack cli";
 	async handle() {
 		const [_, setCommand] = useCommand();
@@ -3079,7 +3079,7 @@ var LoginCommand = class extends Command {
 			const password = await this.secret("Password", "*");
 			if (await this.confirm("Remember Email Address?", true)) write("remember_login", { email });
 			else remove("remember_login");
-			const [e, response] = await promiseWrapper(signIn(email, password));
+			const [_$1, response] = await promiseWrapper(signIn(email, password));
 			if (response && response.data) {
 				storeLoginDetails(response);
 				token = response.data.token;
@@ -3091,7 +3091,7 @@ var LoginCommand = class extends Command {
 			if (err || !integration) this.error("ERROR: " + (err ?? "Integration selection failed")).newLine();
 			else {
 				write("selected_integration", integration);
-				let user_role = read("selected_integration").logged_in_user_role;
+				const user_role = read("selected_integration").logged_in_user_role;
 				const [err$1, integrationData] = await promiseWrapper(getIntegration(integration.id, token));
 				if (err$1 || !integrationData) return void this.error("ERROR: " + (err$1 ?? "Failed to fetch integration data")).newLine();
 				integrationData.logged_in_user_role = user_role;
@@ -3112,13 +3112,13 @@ var LoginCommand = class extends Command {
 //#endregion
 //#region src/Commands/LogoutCommand.ts
 var LogoutCommand = class extends Command {
-	signature = `logout`;
+	signature = "logout";
 	description = "Log out of paystack cli";
 	async handle() {
 		const [_, setCommand] = useCommand();
 		setCommand(this);
 		this.newLine();
-		const spinner = ora(`Logging out...`).start();
+		const spinner = ora("Logging out...").start();
 		try {
 			await wait(1e3, () => clearAuth());
 			spinner.succeed("Logged out successfully");
@@ -3184,7 +3184,7 @@ var WebhookCommand = class extends Command {
 			if (!url.search || url.search == "?") url.search = "";
 			try {
 				await ngrok.kill();
-			} catch (e) {
+			} catch {
 				this.debug("No existing ngrok process found to kill.");
 			}
 			const ngrokURL = (await ngrok.forward({
@@ -3194,7 +3194,7 @@ var WebhookCommand = class extends Command {
 			})).url();
 			const domain$1 = this.option("domain", "test");
 			const spinner = ora("Tunelling webhook events to " + logger(local_route)).start();
-			var [err, result] = await promiseWrapper(setWebhook(ngrokURL, token, read("selected_integration").id));
+			const [err, result] = await promiseWrapper(setWebhook(ngrokURL, token, read("selected_integration").id));
 			if (err || !result) return void this.error("ERROR: " + (err ?? "Failed to set webhook URL")).newLine();
 			spinner.succeed("Listening for incoming webhook events at " + logger(local_route));
 			this.newLine().success(`INFO: Press ${logger("Ctrl+C", ["grey", "italic"])} to stop listening for webhook events.`).success(`INFO: Webhook URL set to ${logger(ngrokURL)} for ${domain$1} domain`).newLine();

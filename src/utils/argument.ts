@@ -1,5 +1,5 @@
-import { XParam } from "../Contracts/Generic";
-import { useShortcuts } from "src/hooks";
+import { XParam } from '../Contracts/Generic'
+import { useShortcuts } from 'src/hooks'
 
 /**
  * We would build a command signature string from an array of arguments.
@@ -38,66 +38,66 @@ import { useShortcuts } from "src/hooks";
  * @param args 
  */
 export const buildSignature = (param: XParam, cmd: string) => {
-    const [_, setShortcut] = useShortcuts();
+    const [_, setShortcut] = useShortcuts()
 
-    let signature = '';
+    let signature = ''
 
     // Determine if it's a flag or argument
-    const isFlag = !param.required || param.default !== undefined || param.type === 'Boolean' || param.options;
+    const isFlag = !param.required || param.default !== undefined || param.type === 'Boolean' || param.options
 
     if (isFlag && param.paramType !== 'path' && param.arg !== true) {
-        signature += `{--`;
+        signature += '{--'
 
         // Use cmd to track used shortcuts
-        const shortcut = cmd + ':' + param.parameter.charAt(0).toLowerCase();
+        const shortcut = cmd + ':' + param.parameter.charAt(0).toLowerCase()
         if (setShortcut(shortcut)) {
-            signature += `${param.parameter.charAt(0).toLowerCase()}|`;
+            signature += `${param.parameter.charAt(0).toLowerCase()}|`
         } else {
             // Try to get first letter of second word if multiword
-            const words = param.parameter.split(/[_-\s]/);
+            const words = param.parameter.split(/[_-\s]/)
             if (words.length > 1) {
-                const secondWordShortcut = cmd + ':' + words[1].charAt(0).toLowerCase();
+                const secondWordShortcut = cmd + ':' + words[1].charAt(0).toLowerCase()
                 if (setShortcut(secondWordShortcut)) {
-                    signature += `${words[1].charAt(0).toLowerCase()}|`;
+                    signature += `${words[1].charAt(0).toLowerCase()}|`
                 }
             }
         }
 
-        signature += `${param.parameter}`;
+        signature += `${param.parameter}`
 
         // Handle different types
         if (param.type !== 'Boolean') {
-            signature += param.default ? `=${param.default}` : `?`;
+            signature += param.default ? `=${param.default}` : '?'
         }
 
         // Add description if available
         if (param.description) {
-            signature += ` : ${param.description}`;
+            signature += ` : ${param.description}`
         }
 
         // Add options if available
         if (param.options) {
-            const optionsStr = param.options.join(',');
-            signature += ` : ${optionsStr}`;
+            const optionsStr = param.options.join(',')
+            signature += ` : ${optionsStr}`
         }
 
-        signature += `}`;
+        signature += '}'
     } else {
 
         // It's a required argument
-        signature += `{${param.parameter}`;
+        signature += `{${param.parameter}`
 
         if (param.default) {
-            signature += `=${param.default}`;
+            signature += `=${param.default}`
         }
 
         // Add description if available
         if (param.description) {
-            signature += ` : ${param.description}`;
+            signature += ` : ${param.description}`
         }
 
-        signature += `}`;
+        signature += '}'
     }
 
-    return signature;
+    return signature
 } 

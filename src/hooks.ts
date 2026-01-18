@@ -1,7 +1,7 @@
-import { read, write } from "./db"
+import { read, write } from './db'
 
-import { Command } from "@h3ravel/musket"
-import { IConfig } from "./Contracts/Interfaces"
+import { Command } from '@h3ravel/musket'
+import { IConfig } from './Contracts/Interfaces'
 
 let commandInstance: Command | undefined
 
@@ -14,7 +14,8 @@ export function useCommand (): [() => Command, (newCommand: Command) => void] {
             if (!commandInstance) {
                 throw new Error('Commander instance has not been initialized')
             }
-            return commandInstance
+            
+return commandInstance
         },
         (newCommand: Command) => {
             commandInstance = newCommand
@@ -34,17 +35,18 @@ export function useConfig () {
                 debug: false,
                 apiBaseURL: 'https://api.paystack.co',
                 timeoutDuration: 3000
-            };
+            }
         },
         (config: IConfig): IConfig => {
-            write('config', config);
-            return read('config')
+            write('config', config)
+            
+return read('config')
         },
     ] as const
 }
 
 
-let shortcutUsed = new Set<string>();
+const shortcutUsed = new Set<string>()
 
 /**
  * Hook to make command shortcuts unique across the application.
@@ -56,14 +58,16 @@ export function useShortcuts () {
         () => Array.from(shortcutUsed).filter(s => !!s),
         (shortcut?: string): boolean => {
             if (!shortcut) {
-                shortcutUsed.clear();
-                return false;
+                shortcutUsed.clear()
+                
+return false
             }
             if (shortcutUsed.has(shortcut)) {
-                return false;
+                return false
             }
-            shortcutUsed.add(shortcut);
-            return true;
+            shortcutUsed.add(shortcut)
+            
+return true
         },
     ] as const
 }

@@ -1,4 +1,4 @@
-import { Command } from "@h3ravel/musket"
+import { Command } from '@h3ravel/musket'
 
 export class TestCommand extends Command {
 

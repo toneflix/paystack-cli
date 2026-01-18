@@ -2,8 +2,12 @@
 
 [![npm version](https://img.shields.io/npm/v/@toneflix/paystack-cli.svg)](https://www.npmjs.com/package/@toneflix/paystack-cli)
 [![License](https://img.shields.io/npm/l/@toneflix/paystack-cli.svg)](https://github.com/toneflix/paystack-cli/blob/main/LICENSE)
+[![CI](https://github.com/toneflix/paystack-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/toneflix/paystack-cli/actions/workflows/ci.yml)
+[![Deploy Docs](https://github.com/toneflix/paystack-cli/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/toneflix/paystack-cli/actions/workflows/deploy-docs.yml)
 
 The Paystack CLI helps you build, test, and manage your Paystack integration right from the terminal. Interact with the Paystack API, test webhooks locally, and manage your integration settings without leaving your command line.
+
+📚 **[View Documentation](https://toneflix.github.io/PaystackCli/)**
 
 ## Table of Contents
 
@@ -188,7 +192,7 @@ Arguments:
 
 Options:
 
-- `--domain, -D`: Specify domain to ping (test/live) [default: test]
+- `--domain, -D`: Specify domain to ping (test/live) `[default: test]`
 - `--forward, -F`: Forward webhook to a specific URL
 
 Example:
@@ -215,7 +219,7 @@ paystack-cli webhook ping
 Options:
 
 - `--event, -E`: Event type to simulate (charge.success, transfer.success, etc.)
-- `--domain, -D`: Domain to ping (test/live) [default: test]
+- `--domain, -D`: Domain to ping (test/live) `[default: test]`
 - `--forward, -F`: Forward to specific URL instead of saved webhook
 
 Example:
@@ -766,28 +770,28 @@ pnpm test
 
 ### Project Structure
 
-```
+```md
 paystack-cli/
 ├── src/
-│   ├── Commands/          # CLI command classes
-│   │   ├── Commands.ts    # Dynamic API command generator
-│   │   ├── InitCommand.ts
-│   │   ├── LoginCommand.ts
-│   │   ├── LogoutCommand.ts
-│   │   ├── ConfigCommand.ts
-│   │   └── WebhookCommand.ts
-│   ├── Contracts/         # TypeScript interfaces
-│   ├── paystack/          # Paystack API definitions
-│   │   ├── apis.ts       # All API endpoint schemas
-│   │   └── webhooks.ts   # Webhook event handlers
-│   ├── utils/            # Utility functions
-│   ├── cli.ts           # Application entry point
-│   ├── db.ts            # Local database management
-│   ├── helpers.ts       # Helper functions
-│   ├── hooks.ts         # Custom hooks
-│   └── Paystack.ts      # Paystack API client
-├── bin/                 # Executable files
-├── tests/              # Test files
+│ ├── Commands/ # CLI command classes
+│ │ ├── Commands.ts # Dynamic API command generator
+│ │ ├── InitCommand.ts
+│ │ ├── LoginCommand.ts
+│ │ ├── LogoutCommand.ts
+│ │ ├── ConfigCommand.ts
+│ │ └── WebhookCommand.ts
+│ ├── Contracts/ # TypeScript interfaces
+│ ├── paystack/ # Paystack API definitions
+│ │ ├── apis.ts # All API endpoint schemas
+│ │ └── webhooks.ts # Webhook event handlers
+│ ├── utils/ # Utility functions
+│ ├── cli.ts # Application entry point
+│ ├── db.ts # Local database management
+│ ├── helpers.ts # Helper functions
+│ ├── hooks.ts # Custom hooks
+│ └── Paystack.ts # Paystack API client
+├── bin/ # Executable files
+├── tests/ # Test files
 └── package.json
 ```
 

@@ -1,5 +1,5 @@
-import { Logger } from "@h3ravel/shared";
-import { XGeneric } from "../Contracts/Generic";
+import { Logger } from '@h3ravel/shared'
+import { XGeneric } from '../Contracts/Generic'
 
 /**
  * We will recursively map through the result data and log each key value pair
@@ -11,33 +11,33 @@ import { XGeneric } from "../Contracts/Generic";
  */
 export const dataRenderer = (data: XGeneric) => {
     const render = (obj: XGeneric, indent = 0) => {
-        const indentation = ' '.repeat(indent);
+        const indentation = ' '.repeat(indent)
         for (const key in obj) {
-            const value = obj[key];
+            const value = obj[key]
             if (typeof value === 'object' && value !== null) {
-                console.log(`${indentation}${stringFormatter(key)}:`);
-                render(value, indent + 2);
+                console.log(`${indentation}${stringFormatter(key)}:`)
+                render(value, indent + 2)
             } else {
-                let coloredValue;
+                let coloredValue
                 switch (typeof value) {
                     case 'string':
-                        coloredValue = Logger.log(value, 'green', false);
-                        break;
+                        coloredValue = Logger.log(value, 'green', false)
+                        break
                     case 'number':
-                        coloredValue = Logger.log(String(value), 'yellow', false);
-                        break;
+                        coloredValue = Logger.log(String(value), 'yellow', false)
+                        break
                     case 'boolean':
-                        coloredValue = Logger.log(String(value), 'blue', false);
-                        break;
+                        coloredValue = Logger.log(String(value), 'blue', false)
+                        break
                     default:
-                        coloredValue = value;
+                        coloredValue = value
                 }
-                console.log(`${indentation}${stringFormatter(key)}: ${coloredValue}`);
+                console.log(`${indentation}${stringFormatter(key)}: ${coloredValue}`)
             }
         }
-    };
+    }
 
-    render(data);
+    render(data)
 }
 
 /**
@@ -59,5 +59,5 @@ export const stringFormatter = (str: string) => {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize first letter
         .join(' ')
         .trim()
-        .replace(/^(\w{2})$/, (_, p1) => p1.toUpperCase()); // uppercase if two letters
+        .replace(/^(\w{2})$/, (_, p1) => p1.toUpperCase()) // uppercase if two letters
 }

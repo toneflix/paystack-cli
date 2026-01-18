@@ -1,12 +1,12 @@
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { useCommand, useConfig } from './hooks';
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { useCommand, useConfig } from './hooks'
 
 export const api = axios.create({
     baseURL: 'https://api.paystack.co',
     headers: {
         'Content-Type': 'application/json',
     },
-});
+})
 
 /**
  * Initialize Axios with configuration from the application settings.
@@ -15,8 +15,8 @@ export const initAxios = () => {
     const [getConfig] = useConfig()
     const config = getConfig()
 
-    api.defaults.baseURL = config.apiBaseURL || 'https://api.paystack.co';
-    api.defaults.timeout = config.timeoutDuration || 3000;
+    api.defaults.baseURL = config.apiBaseURL || 'https://api.paystack.co'
+    api.defaults.timeout = config.timeoutDuration || 3000
 }
 
 /**
@@ -31,19 +31,20 @@ const logInterceptor = (config: InternalAxiosRequestConfig) => {
     const v = command().getVerbosity()
 
     if (conf.debug || v > 1) {
-        console.log('Error Response URL:', axios.getUri(config));
+        console.log('Error Response URL:', axios.getUri(config))
 
         if (conf.debug || v >= 2) {
-            console.log('Request URL:', config.url);
-            console.log('Request Method:', config.method);
+            console.log('Request URL:', config.url)
+            console.log('Request Method:', config.method)
         }
         if (conf.debug || v == 3) {
-            console.log('Request Headers:', config.headers);
-            console.log('Request Data:', config.data);
+            console.log('Request Headers:', config.headers)
+            console.log('Request Data:', config.data)
         }
     }
-    return config;
-};
+    
+return config
+}
 
 /**
  * Log only the relevant parts of the response if we are in not in production
@@ -58,21 +59,22 @@ const logResponseInterceptor = (response: AxiosResponse) => {
     const v = command().getVerbosity()
 
     if (conf.debug || v > 1) {
-        const { data, status, statusText, headers } = response;
+        const { data, status, statusText, headers } = response
 
-        console.log('Error Response URL:', axios.getUri(response.config));
+        console.log('Error Response URL:', axios.getUri(response.config))
 
         if (conf.debug || v >= 2) {
-            console.log('Response Data:', data);
-            console.log('Response Status:', status);
+            console.log('Response Data:', data)
+            console.log('Response Status:', status)
         }
         if (conf.debug || v === 3) {
-            console.log('Response Status Text:', statusText);
-            console.log('Response Headers:', headers);
+            console.log('Response Status Text:', statusText)
+            console.log('Response Headers:', headers)
         }
     }
-    return response;
-};
+    
+return response
+}
 
 const logResponseErrorInterceptor = (error: AxiosError) => {
     const [getConfig] = useConfig()
@@ -82,25 +84,26 @@ const logResponseErrorInterceptor = (error: AxiosError) => {
 
     if (conf.debug || v > 1) {
         if (error.response) {
-            const { data, status, headers } = error.response;
+            const { data, status, headers } = error.response
 
-            console.log('Error Response URL:', axios.getUri(error.config));
+            console.log('Error Response URL:', axios.getUri(error.config))
 
             if (conf.debug || v >= 2) {
-                console.log('Error Response Data:', data);
-                console.log('Error Response Status:', status);
+                console.log('Error Response Data:', data)
+                console.log('Error Response Status:', status)
             }
             if (conf.debug || v === 3) {
-                console.log('Error Response Headers:', headers);
+                console.log('Error Response Headers:', headers)
             }
         } else {
-            console.log('Error Message:', error.message);
+            console.log('Error Message:', error.message)
         }
     }
-    return Promise.reject(error);
-};
+    
+return Promise.reject(error)
+}
 
-api.interceptors.request.use(logInterceptor, (error) => Promise.reject(error));
-api.interceptors.response.use(logResponseInterceptor, logResponseErrorInterceptor);
+api.interceptors.request.use(logInterceptor, (error) => Promise.reject(error))
+api.interceptors.response.use(logResponseInterceptor, logResponseErrorInterceptor)
 
-export default api;
+export default api

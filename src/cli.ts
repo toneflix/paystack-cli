@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
-import Commands from './Commands/Commands';
-import { ConfigCommand } from './Commands/ConfigCommand';
-import { InitCommand } from './Commands/InitCommand';
-import { Kernel } from '@h3ravel/musket';
-import { LoginCommand } from './Commands/LoginCommand';
-import { LogoutCommand } from './Commands/LogoutCommand';
-import { WebhookCommand } from './Commands/WebhookCommand';
-import { initAxios } from './axios';
-import logo from './logo';
-import { useConfig } from './hooks';
+import Commands from './Commands/Commands'
+import { ConfigCommand } from './Commands/ConfigCommand'
+import { InitCommand } from './Commands/InitCommand'
+import { Kernel } from '@h3ravel/musket'
+import { LoginCommand } from './Commands/LoginCommand'
+import { LogoutCommand } from './Commands/LogoutCommand'
+import { WebhookCommand } from './Commands/WebhookCommand'
+import { initAxios } from './axios'
+import logo from './logo'
+import { useConfig } from './hooks'
 
 class Application { }
 
@@ -20,7 +20,7 @@ Kernel.init(new Application(), {
         const [getConfig] = useConfig()
         const config = getConfig()
 
-        console.error(config.debug ? exception : exception.message);
+        console.error(config.debug ? exception : exception.message)
     },
     baseCommands: [
         InitCommand,

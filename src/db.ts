@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3'
-import { XGeneric } from './Contracts/Generic';
+import { XGeneric } from './Contracts/Generic'
 
 const db = new Database('app.db')
 db.pragma('journal_mode = WAL')
@@ -11,7 +11,7 @@ export function init (table = 'json_store') {
             key TEXT UNIQUE,
             value TEXT
         )
-    `);
+    `)
 }
 
 /**
@@ -23,9 +23,9 @@ export function init (table = 'json_store') {
  */
 export function write (key: string, value: any, table = 'json_store') {
     if (typeof value === 'boolean')
-        value = value ? '1' : '0';
+        value = value ? '1' : '0'
     if (value instanceof Object)
-        value = JSON.stringify(value);
+        value = JSON.stringify(value)
 
     const insert = db.prepare(`INSERT INTO ${table} (key, value)
         VALUES (?, ?)
@@ -40,6 +40,7 @@ export function write (key: string, value: any, table = 'json_store') {
 
 export function remove (key: string, table = 'json_store') {
     const insert = db.prepare(`DELETE FROM ${table} WHERE key = ?`)
+
     return insert.run(
         key,
     ).lastInsertRowid
@@ -50,6 +51,7 @@ export function remove (key: string, table = 'json_store') {
  */
 export function clear (table = 'json_store') {
     const insert = db.prepare(`DELETE FROM ${table}`)
+
     return insert.run().changes
 }
 
@@ -61,9 +63,9 @@ export function clear (table = 'json_store') {
 export function keys (table = 'json_store') {
     const rows = db
         .prepare(`SELECT key FROM ${table}`)
-        .all() as { key: string }[];
+        .all() as { key: string }[]
 
-    return rows.map(row => row.key);
+    return rows.map(row => row.key)
 }
 
 /**
@@ -74,17 +76,18 @@ export function keys (table = 'json_store') {
 export function getData (table = 'json_store') {
     const rows = db
         .prepare(`SELECT * FROM ${table}`)
-        .all() as { key: string, value: string }[];
+        .all() as { key: string, value: string }[]
 
-    const data: XGeneric = {};
+    const data: XGeneric = {}
     rows.forEach(row => {
         try {
-            data[row.key] = JSON.parse(row.value);
-        } catch (e) {
-            data[row.key] = row.value;
+            data[row.key] = JSON.parse(row.value)
+        } catch {
+            data[row.key] = row.value
         }
-    });
-    return data;
+    })
+
+    return data
 }
 
 /**
@@ -96,14 +99,15 @@ export function getData (table = 'json_store') {
 export function read (key: string, table = 'json_store'): any {
     const row = db
         .prepare(`SELECT * FROM ${table} WHERE key = ?`)
-        .get(key) as XGeneric | undefined;
+        .get(key) as XGeneric | undefined
 
     if (row) {
         try {
-            return JSON.parse(row.value) as XGeneric;
-        } catch (e) {
-            return row.value;
+            return JSON.parse(row.value) as XGeneric
+        } catch {
+            return row.value
         }
     }
-    return null;
+
+    return null
 } 

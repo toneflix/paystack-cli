@@ -1,4 +1,4 @@
-import { XCommand, XSchema } from "../Contracts/Generic";
+import { XCommand, XSchema } from '../Contracts/Generic'
 
 const APIs: { [K in XCommand]: XSchema[] } = {
     subaccount: [
@@ -2096,4 +2096,4 @@ const APIs: { [K in XCommand]: XSchema[] } = {
 }
 
 
-export default APIs;
+export default APIs

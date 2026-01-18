@@ -1,4 +1,4 @@
-import { XGeneric } from "./Generic";
+import { XGeneric } from './Generic'
 
 export interface IResponse<X = XGeneric> {
     status: boolean

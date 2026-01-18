@@ -1,6 +1,6 @@
-import { useCommand, useConfig } from "../hooks"
+import { useCommand, useConfig } from '../hooks'
 
-import { IConfig } from "../Contracts/Interfaces"
+import { IConfig } from '../Contracts/Interfaces'
 
 export const configChoices = (config: IConfig) => {
     return [
@@ -27,7 +27,7 @@ export const configChoices = (config: IConfig) => {
         {
             name: 'Reset Configuration',
             value: 'reset',
-            description: `Reset all configurations to default values`
+            description: 'Reset all configurations to default values'
         },
     ]
 }
@@ -40,17 +40,17 @@ export const saveConfig = async (choice: keyof IConfig) => {
     if (choice === 'debug') {
         const debug = await command().confirm(
             `${config.debug ? 'Dis' : 'En'}able debug mode?`, config.debug === true
-        );
-        config.debug = config.debug !== debug;
+        )
+        config.debug = config.debug !== debug
     } else if (choice === 'apiBaseURL') {
-        const apiBaseURL = await command().ask('Enter API Base URL', config.apiBaseURL);
-        config.apiBaseURL = apiBaseURL;
+        const apiBaseURL = await command().ask('Enter API Base URL', config.apiBaseURL)
+        config.apiBaseURL = apiBaseURL
     } else if (choice === 'ngrokAuthToken') {
-        const ngrokAuthToken = await command().ask('Enter Ngrok Auth Token', config.ngrokAuthToken || '');
-        config.ngrokAuthToken = ngrokAuthToken;
+        const ngrokAuthToken = await command().ask('Enter Ngrok Auth Token', config.ngrokAuthToken || '')
+        config.ngrokAuthToken = ngrokAuthToken
     } else if (choice === 'timeoutDuration') {
-        const timeoutDuration = await command().ask('Enter Timeout Duration (in ms)', config.timeoutDuration.toString());
-        config.timeoutDuration = parseInt(timeoutDuration);
+        const timeoutDuration = await command().ask('Enter Timeout Duration (in ms)', config.timeoutDuration.toString())
+        config.timeoutDuration = parseInt(timeoutDuration)
     } else if (choice === 'reset') {
         config = {
             debug: false,
@@ -59,5 +59,5 @@ export const saveConfig = async (choice: keyof IConfig) => {
         }
     }
 
-    setConfig(config);
+    setConfig(config)
 }
