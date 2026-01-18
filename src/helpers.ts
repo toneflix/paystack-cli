@@ -5,23 +5,55 @@ import { XGeneric, XSchema } from './Contracts/Generic.js'
 
 import { IResponse } from './Contracts/Interfaces'
 import api from './axios'
+import { existsSync } from 'fs'
+import { fileURLToPath } from 'url'
+import path from 'path'
 import { useConfig } from './hooks'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+/**
+ * Wrap a promise to return a tuple of error and result
+ * 
+ * @param promise 
+ * @returns 
+ */
 export const promiseWrapper = <T> (promise: Promise<T>): Promise<[string | null, T | null]> =>
     promise
         .then((data) => [null, data] as [null, T])
         .catch((error) => [typeof error === 'string' ? error : error.message, null] as [string, null])
 
+/**
+ * Check if a value is JSON
+ * 
+ * @param val 
+ * @returns 
+ */
 export function isJson (val: any): val is XGeneric {
     return val instanceof Array || val instanceof Object ? true : false
 }
 
+/**
+ * Parse a URL
+ * 
+ * @param uri 
+ * @returns 
+ */
 export function parseURL (uri: string) {
     if (!uri.startsWith('http')) uri = 'http://' + uri
-    
-return new URL(uri)
+
+    return new URL(uri)
 }
 
+/**
+ * Get integration keys
+ * 
+ * @param token 
+ * @param type 
+ * @param domain 
+ * @returns 
+ */
 function getKeys (token: string, type = 'secret', domain = 'test') {
     return new Promise((resolve, reject) => {
         api.get('/integration/keys', {
@@ -39,16 +71,20 @@ function getKeys (token: string, type = 'secret', domain = 'test') {
             }
             resolve(key.key)
         }).catch((error) => {
-            if (error.response) {
-                reject(error.response.data.message)
-                
-return
-            }
+            if (error.response) return void reject(error.response.data.message)
+
             reject(error)
         })
     })
 }
 
+/**
+ * Execute a schema
+ * 
+ * @param schema 
+ * @param options 
+ * @returns 
+ */
 export async function executeSchema (schema: XSchema, options: XGeneric) {
     let domain = 'test'
     if (options.domain) {
@@ -91,6 +127,13 @@ export async function executeSchema (schema: XSchema, options: XGeneric) {
     })
 }
 
+/**
+ * Wait for a specified number of milliseconds
+ * 
+ * @param ms 
+ * @param callback 
+ * @returns 
+ */
 export const wait = (ms: number, callback?: () => any) => {
     return new Promise<void>((resolve) => {
         setTimeout(() => {
@@ -100,6 +143,36 @@ export const wait = (ms: number, callback?: () => any) => {
     })
 }
 
+/**
+ * Logger helper
+ * 
+ * @param str 
+ * @param config 
+ * @returns 
+ */
 export const logger = (str: string, config: LoggerChalk = ['green', 'italic']) => {
     return Logger.log(str, config, false)
+}
+
+/**
+ * Find the nearest package.json file
+ * 
+ * @param startDir 
+ * @returns 
+ */
+export const findCLIPackageJson = (startDir = __dirname) => {
+    let dir = startDir
+
+    while (true) {
+        const pkgPath = path.join(dir, 'package.json')
+        if (existsSync(pkgPath)) {
+            return pkgPath
+        }
+
+        const parent = path.dirname(dir)
+        if (parent === dir) break
+        dir = parent
+    }
+
+    return null
 }

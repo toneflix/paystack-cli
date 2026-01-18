@@ -1,3 +1,4 @@
+import { findCLIPackageJson, wait } from 'src/helpers'
 import { init, useDbPath } from 'src/db'
 
 import { Command } from '@h3ravel/musket'
@@ -6,21 +7,26 @@ import { dataRenderer } from 'src/utils/renderer'
 import ora from 'ora'
 import os from 'os'
 import { useCommand } from 'src/hooks'
-import { wait } from 'src/helpers'
 
 export class InfoCommand extends Command {
     protected signature = 'info'
     protected description = 'Display application runtime information.'
     async handle () {
+        let pkg = { version: 'unknown', dependencies: {} }
+        const pkgPath = findCLIPackageJson()
         const require = createRequire(import.meta.url)
         const [_, setCommand] = useCommand()
         const [dbPath] = useDbPath()
         setCommand(this)
         init()
 
-        const pkg = require('../../package.json')
-
         const spinner = ora('Gathering application information...\n').start()
+
+        if (pkgPath) {
+            try {
+                pkg = require(pkgPath)
+            } catch { /** */ }
+        }
 
         wait(500, () => {
             spinner.stop()
