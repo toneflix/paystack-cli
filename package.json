@@ -1,0 +1,67 @@
+{
+    "name": "@toneflix/paystack-cli",
+    "type": "module",
+    "version": "0.1.0",
+    "description": "The Paystack CLI helps you build, test, and manage your Paystack integration right from the terminal.",
+    "main": "build/index.js",
+    "private": false,
+    "publishConfig": {
+        "access": "public"
+    },
+    "bin": {
+        "paystack-cli": "bin/cli.js"
+    },
+    "exports": {
+        ".": "./bin/cli.js"
+    },
+    "files": [
+        "bin",
+        "bin/cli.js",
+        "bin/cli.cjs"
+    ],
+    "keywords": [
+        "paystack",
+        "cli",
+        "command-line",
+        "tool",
+        "integration",
+        "sdk",
+        "api",
+        "developer",
+        "h3ravel",
+        "toneflix"
+    ],
+    "scripts": {
+        "quick:test": "pnpm vitest",
+        "test": "pnpm run quick:test",
+        "runner": "tsx --experimental-specifier-resolution=node src/cli.ts",
+        "build": "tsdown",
+        "dummy": "node ./tests/test.sever.js",
+        "version": "pnpm run build",
+        "unlink": "pnpm uninstall --global @toneflix/paystack-cli",
+        "release": "pnpm build && pnpm changeset version && pnpm changeset publish",
+        "publish-it": "pnpm build && pnpm publish --tag latest",
+        "postinstall": "pnpm paystack-cli init"
+    },
+    "dependencies": {
+        "@h3ravel/musket": "^0.6.18",
+        "@h3ravel/shared": "^0.28.4",
+        "@ngrok/ngrok": "^1.7.0",
+        "axios": "^1.13.2",
+        "better-sqlite3": "^12.6.2",
+        "ora": "^9.0.0"
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.29.5",
+        "@swc/core": "^1.6.1",
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^20.14.5",
+        "eslint": "^9.32.0",
+        "ts-node": "^10.9.2",
+        "tsdown": "^0.15.4",
+        "tsx": "^4.20.3",
+        "typescript": "^5.4.5",
+        "vite-tsconfig-paths": "^5.1.4",
+        "vitest": "^3.2.4"
+    }
+}
