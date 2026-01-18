@@ -3,7 +3,8 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
     title: 'Paystack CLI',
     description: 'Build, test, and manage your Paystack integration from the terminal',
-    base: '/PaystackCli/',
+    cleanUrls: true,
+    lastUpdated: true,
 
     themeConfig: {
         logo: '/logo.svg',
