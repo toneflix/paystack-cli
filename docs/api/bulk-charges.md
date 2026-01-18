@@ -313,6 +313,5 @@ paystack-cli customer:fetch --code=CUS_xxx --json | \
 
 ## Next Steps
 
-- [Charges API](/api/charges)
 - [Customers API](/api/customers)
 - [Transactions API](/api/transactions)
