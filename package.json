@@ -47,7 +47,6 @@
         "unlink": "pnpm uninstall --global @toneflix/paystack-cli",
         "release": "pnpm build && pnpm changeset version && pnpm changeset publish",
         "publish-it": "pnpm build && pnpm publish --tag latest",
-        "postinstall": "pnpm paystack-cli init",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs"
