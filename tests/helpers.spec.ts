@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isJson, parseURL, promiseWrapper, wait } from '../src/helpers'
+import { isJson, parseURL, promiseWrapper } from '../src/helpers'
 
 describe('Helpers Test', () => {
     it('parseURL should correctly parse URLs', () => {
