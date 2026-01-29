@@ -1,20 +1,22 @@
+import { dataRenderer, miniServer } from 'src/utils/builders'
 import { isJson, logger, parseURL, promiseWrapper } from 'src/helpers'
 import { pingWebhook, refreshIntegration, setWebhook } from 'src/Paystack'
 import { useCommand, useConfig } from 'src/hooks'
 
 import { Command } from '@h3ravel/musket'
-import { dataRenderer } from 'src/utils/renderer'
+import { ServerHandler, type Server } from 'srvx'
 import ngrok from '@ngrok/ngrok'
-import ora from 'ora'
 import { read } from '../db'
 
 export class WebhookCommand extends Command {
     protected signature = `webhook
     {command=listen : The command to run to listen for webhooks locally : [listen, ping]}
-    {local_route? : Specify the local route to listen on for webhooks (only for listen command)}
+    {url? : Specify the url to listen on for webhooks (only for listen command, should be an accessible local url)}
     {--D|domain=test : Specify the domain to ping the webhook : [test, live]}
     {--F|forward? : Specify a URL to forward the webhook to instead of the saved webhook URL}
-    {--E|event? : Specify the event type to simulate : [charge.success,transfer.success,transfer.failed,subscription.create]}
+    {--E|event? : Specify the event type to simulate (leave empty to prompt with more options) : [charge.success,transfer.success,transfer.failed,subscription.create]}
+    {--S|serve : Start a local server to receive webhooks (only for listen command, ignored if url is provided)}
+    {--M|mod : Show options to modify the webhook payload before sending (only for ping command)}
 `
     protected description = 'Listen for webhook events locally, runs a webhook endpoint health check and listens for incoming webhooks, and ping your webhook URL from the CLI.'
 
@@ -26,7 +28,8 @@ export class WebhookCommand extends Command {
 
         const config = getConfig()
         let event = this.option('event')
-        let local_route = this.argument('local_route')
+        let server: Server<ServerHandler> | null = null
+        let localUrl = this.argument('url')
         const selected_integration = read('selected_integration')?.id
         const user = read('user')?.id
 
@@ -35,9 +38,12 @@ export class WebhookCommand extends Command {
                 `ERROR: You're not signed in, please run the ${logger('login', ['grey', 'italic'])} command before you begin`
             )
 
-        if (this.argument('command') == 'listen' && !local_route) {
-            local_route = await this.ask(
-                'Enter the local route to listen on for webhooks: ',
+        if (this.argument('command') == 'listen' && !localUrl) {
+            if (this.option('serve'))
+                server = await miniServer(3000)
+
+            localUrl = server?.url ?? await this.ask(
+                'Enter the url to listen on for webhooks: ',
                 'http://localhost:8080/webhook'
             )
         } else if (this.argument('command') == 'ping' && !event) {
@@ -46,6 +52,10 @@ export class WebhookCommand extends Command {
                 { name: 'Transfer Success', value: 'transfer.success' },
                 { name: 'Transfer Failed', value: 'transfer.failed' },
                 { name: 'Subscription Create', value: 'subscription.create' },
+                { name: 'Customer Identification Failed', value: 'customeridentification.failed' },
+                { name: 'Customer Identification Success', value: 'customeridentification.success' },
+                { name: 'DVA Assign Failed', value: 'dedicatedaccount.assign.failed' },
+                { name: 'DVA Assign Success', value: 'dedicatedaccount.assign.success' }
             ], 0)
         }
 
@@ -61,7 +71,7 @@ export class WebhookCommand extends Command {
                 return void this.error('ERROR: Your session has expired. Please run the `login` command to sign in again.')
             }
 
-            const url = parseURL(local_route)
+            const url = parseURL(localUrl)
 
             if (!url.port)
                 url.port = '8000'
@@ -81,14 +91,15 @@ export class WebhookCommand extends Command {
                 domain: process.env.NGROK_DOMAIN,
             })
 
-            const ngrokURL = listener.url()!
+            const webhookUrl = new URL(listener.url()! + url.pathname + url.search)
+
             const domain = this.option('domain', 'test')
 
-            const spinner = ora('Tunelling webhook events to ' + logger(local_route)).start()
+            const spinner = this.spinner('Tunelling webhook events to ' + logger(localUrl)).start()
 
             const [err, result] = await promiseWrapper(
                 setWebhook(
-                    ngrokURL,
+                    webhookUrl.toString(),
                     token,
                     read('selected_integration').id,
                 ),
@@ -96,11 +107,12 @@ export class WebhookCommand extends Command {
 
             if (err || !result) return void this.error('ERROR: ' + (err ?? 'Failed to set webhook URL')).newLine()
 
-            spinner.succeed('Listening for incoming webhook events at ' + logger(local_route))
+            spinner.succeed()
 
             this.newLine()
+                .success(`INFO: Listening for incoming webhook events at: ${logger(localUrl)}`)
+                .success(`INFO: Webhook URL set to: ${logger(webhookUrl.toString())} for ${domain} domain`)
                 .success(`INFO: Press ${logger('Ctrl+C', ['grey', 'italic'])} to stop listening for webhook events.`)
-                .success(`INFO: Webhook URL set to ${logger(ngrokURL)} for ${domain} domain`)
                 .newLine()
 
             process.stdin.resume()

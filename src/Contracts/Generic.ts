@@ -6,7 +6,11 @@ export type XEvent =
     | 'charge.success'
     | 'transfer.success'
     | 'transfer.failed'
-    | 'subscription.create';
+    | 'subscription.create'
+    | 'customeridentification.failed'
+    | 'customeridentification.success'
+    | 'dedicatedaccount.assign.failed'
+    | 'dedicatedaccount.assign.success'
 
 export type XCommand =
     | 'subaccount'

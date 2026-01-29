@@ -6,8 +6,7 @@ import APIs from '../paystack/apis'
 import { Command } from '@h3ravel/musket'
 import { XSchema } from '../Contracts/Generic'
 import { buildSignature } from 'src/utils/argument'
-import { dataRenderer } from '../utils/renderer'
-import ora from 'ora'
+import { dataRenderer } from '../utils/builders'
 import { useCommand } from '../hooks'
 
 export default () => {
@@ -36,7 +35,7 @@ export default () => {
             protected description = schema.description || 'No description available.'
 
             handle = async () => {
-                const [_, setCommand] = useCommand()
+                const [command, setCommand] = useCommand()
                 setCommand(this)
 
                 for (const param of schema.params)
@@ -52,7 +51,7 @@ export default () => {
 
                 this.newLine()
 
-                const spinner = ora('Loading...\n').start()
+                const spinner = command().spinner('Loading...\n').start()
 
                 const [err, result] = await promiseWrapper(
                     executeSchema(schema, { ...this.options(), ...this.arguments() }),

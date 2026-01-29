@@ -1,6 +1,5 @@
 import { Command } from '@h3ravel/musket'
 import { clearAuth } from '../Paystack'
-import ora from 'ora'
 import { useCommand } from '../hooks'
 import { wait } from '../helpers'
 
@@ -13,7 +12,7 @@ export class LogoutCommand extends Command {
         setCommand(this)
         this.newLine()
 
-        const spinner = ora('Logging out...').start()
+        const spinner = this.spinner('Logging out...').start()
 
         try {
             // Clear stored login details

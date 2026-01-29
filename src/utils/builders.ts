@@ -1,5 +1,8 @@
+import { H3, H3Event, serve } from 'h3'
+
 import { Logger } from '@h3ravel/shared'
 import { XGeneric } from '../Contracts/Generic'
+import { detect } from 'detect-port'
 
 /**
  * We will recursively map through the result data and log each key value pair
@@ -15,7 +18,7 @@ export const dataRenderer = (data: XGeneric) => {
         for (const key in obj) {
             const value = obj[key]
             if (typeof value === 'object' && value !== null) {
-                console.log(`${indentation}${stringFormatter(key)}:`)
+                console.log(`${indentation}${key.toCleanCase()}:`)
                 render(value, indent + 2)
             } else {
                 let coloredValue
@@ -32,7 +35,7 @@ export const dataRenderer = (data: XGeneric) => {
                     default:
                         coloredValue = value
                 }
-                console.log(`${indentation}${stringFormatter(key)}: ${coloredValue}`)
+                console.log(`${indentation}${key.toCleanCase()}: ${coloredValue}`)
             }
         }
     }
@@ -41,23 +44,34 @@ export const dataRenderer = (data: XGeneric) => {
 }
 
 /**
- * We will format a string by replacing underscores and hyphens with spaces,
- * capitalizing the first letter of every word,
- * converting camelCase to spaced words,
- * and trimming any leading or trailing spaces.
- * If a sentence is only two letters long we will make it uppercase.
+ * Starts a mini HTTP server on the specified port to listen for incoming webhook requests.
  * 
- * @param str 
+ * @param port 
  * @returns 
  */
-export const stringFormatter = (str: string) => {
-    return str
-        .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase to spaced words
-        .replace(/[_-]+/g, ' ')               // underscores and hyphens to spaces
-        .replace(/\s+/g, ' ')                 // multiple spaces to single space
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize first letter
-        .join(' ')
-        .trim()
-        .replace(/^(\w{2})$/, (_, p1) => p1.toUpperCase()) // uppercase if two letters
+export const miniServer = async (port: number = 3000) => {
+    const route = async (event: H3Event) => {
+        console.log('Incoming Webhook Request [', event.req.method, ']')
+        const payload = JSON.parse(await event.req.text() || '{}')
+
+        return Object.assign(
+            {},
+            { signature: event.req.headers.get('x-paystack-signature') ?? 'N/A' },
+            payload
+        )
+    }
+
+    const app = new H3()
+        .get('/webhook', route)
+        .post('/webhook', route)
+
+    port = await detect(port)
+
+    const server = serve(app, { port, silent: true })
+
+    const url = `http://localhost:${port}/webhook`
+
+    Logger.log([['🚀 Mini server is running at:', 'green'], [url, 'cyan']], ' ')
+
+    return Object.assign({}, server, { url })
 }

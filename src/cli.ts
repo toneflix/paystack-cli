@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
+import './utils/global'
+
 import Commands from './Commands/Commands'
 import { ConfigCommand } from './Commands/ConfigCommand'
 import { InfoCommand } from './Commands/InfoCommand'
 import { InitCommand } from './Commands/InitCommand'
+import { IntegrationInfoCommand } from './Commands/IntegrationInfoCommand'
 import { Kernel } from '@h3ravel/musket'
 import { LoginCommand } from './Commands/LoginCommand'
 import { LogoutCommand } from './Commands/LogoutCommand'
@@ -32,6 +35,7 @@ Kernel.init(new Application(), {
         ConfigCommand,
         WebhookCommand,
         SetIntegrationCommand,
+        IntegrationInfoCommand,
         ...Commands(),
     ],
 })

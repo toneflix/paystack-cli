@@ -6,7 +6,6 @@ import { XEvent, XGeneric } from './Contracts/Generic.js'
 import { AxiosError } from 'axios'
 import api from './axios.js'
 import crypto from 'crypto'
-import ora from 'ora'
 import { promiseWrapper } from './helpers'
 import { useCommand } from './hooks.js'
 import webhookSamples from './paystack/webhooks'
@@ -182,6 +181,7 @@ export function getKeys (token: string, type = 'secret', domain = 'test') {
  */
 export async function pingWebhook (options: XGeneric, event: XEvent = 'charge.success') {
     const [command] = useCommand()
+    const cmd = command()
 
     let canProceed: boolean | undefined = false
     try {
@@ -202,45 +202,57 @@ export async function pingWebhook (options: XGeneric, event: XEvent = 'charge.su
     const token = db.read('token')
     const key = await getKeys(token, 'secret', domain)
 
-    return new Promise<{ code: number, text: string, data: XGeneric | string }>((resolve, reject) => {
+    if (!canProceed) return void cmd.error('ERROR: Unable to ping webhook URL')
 
-        if (!canProceed) return void command().error('ERROR: Unable to ping webhook URL')
-
-        const eventObject = webhookSamples[event]
-        if (eventObject) {
-            const hash = crypto.createHmac('sha512', key).update(JSON.stringify(eventObject)).digest('hex')
-            const uri = db.read('selected_integration')[domain + '_webhook_endpoint']
-
-            const spinner = ora(`Sending sample ${event} event payload to ${uri}`).start()
-            api
-                .post(uri, eventObject, {
-                    headers: {
-                        'x-paystack-signature': hash,
-                    },
-                })
-                .then((response) => {
-                    spinner.succeed(`Sample ${event} event payload sent to ${uri}`)
-                    resolve({
-                        code: response.status,
-                        text: response.statusText,
-                        data: response.data,
-                    })
-                })
-                .catch((e: AxiosError) => {
-                    spinner.fail(`Failed to send sample ${event} event payload to ${uri}`)
-                    resolve({
-                        code: e.response?.status ?? 0,
-                        text: e.response?.statusText || 'No response',
-                        data: typeof e.response?.data === 'string' && e.response?.data?.includes('<html')
-                            ? { response: 'HTML Response' }
-                            : e.response?.data || 'No response data',
-                    })
-                })
-        } else {
-            command().error('ERROR: Invalid event type - ' + event)
-            reject()
+    const eventObject = webhookSamples[event]
+    if (eventObject) {
+        // Modify payload before sending
+        if (options.mod) {
+            for (const [key, val] of Object.entries(eventObject.data)) {
+                if (['string', 'number'].includes(typeof val))
+                    eventObject.data[key] = await cmd.ask(`Enter new value for '${key}':`, String(val))
+                else if (typeof val === 'boolean')
+                    eventObject.data[key] = (await cmd.choice(
+                        `Enter new value for '${key}':`, ['true', 'false'], val ? 0 : 1)
+                    ) === 'true'
+                else
+                    continue
+            }
         }
-    })
+
+        const hash = crypto.createHmac('sha512', key).update(JSON.stringify(eventObject)).digest('hex')
+        const uri = db.read('selected_integration')[domain + '_webhook_endpoint']
+
+        const spinner = cmd.spinner(`Sending sample ${event} event payload to ${uri}`).start()
+        try {
+            const response = await api.post(uri, eventObject, {
+                headers: {
+                    'x-paystack-signature': hash,
+                },
+            })
+
+            spinner.succeed(`Sample ${event} event payload sent to ${uri}`)
+
+            return {
+                code: response.status,
+                text: response.statusText,
+                data: response.data,
+            }
+        } catch (e: any) {
+            spinner.fail(`Failed to send sample ${event} event payload to ${uri}`)
+
+            return {
+                code: e.response?.status ?? 0,
+                text: e.response?.statusText || 'No response',
+                data: typeof e.response?.data === 'string' && e.response?.data?.includes('<html')
+                    ? { response: 'HTML Response' }
+                    : e.response?.data || 'No response data',
+            }
+        }
+    } else {
+        cmd.error('ERROR: Invalid event type - ' + event)
+        throw new Error('Invalid event type: ' + event)
+    }
 }
 
 /**
@@ -252,7 +264,7 @@ export async function pingWebhook (options: XGeneric, event: XEvent = 'charge.su
  */
 export function getIntegration (id: number, token: string) {
     const [command] = useCommand()
-    const spinner = ora('getting integration').start()
+    const spinner = command().spinner('getting integration').start()
 
     return new Promise<IIntegration>((resolve, reject) => {
         api
@@ -283,7 +295,7 @@ export function getIntegration (id: number, token: string) {
  */
 export async function signIn (email: string, password: string) {
     const [command] = useCommand()
-    const spinner = ora('Logging in...').start()
+    const spinner = command().spinner('Logging in...').start()
 
     try {
         const { data: response } = await api.post<IResponse<ILogin>>('/login', {

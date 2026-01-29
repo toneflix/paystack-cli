@@ -3,6 +3,7 @@ import * as db from './db'
 import { Logger, LoggerChalk } from '@h3ravel/shared'
 import { XGeneric, XSchema } from './Contracts/Generic.js'
 
+import CliTable3 from 'cli-table3'
 import { IResponse } from './Contracts/Interfaces'
 import api from './axios'
 import { existsSync } from 'fs'
@@ -175,4 +176,17 @@ export const findCLIPackageJson = (startDir = __dirname) => {
     }
 
     return null
+}
+
+export const objectToTable = (obj: XGeneric, titleKeys: boolean = false) => {
+    const table = new CliTable3()
+
+    for (const rawKey in obj) {
+        if (typeof obj[rawKey] === 'object') continue
+        const key = logger((titleKeys ? rawKey.toCleanCase() : rawKey).truncate(30), ['bold'])
+
+        table.push({ [key]: String(obj[rawKey]).truncate(40) })
+    }
+
+    return table.toString()
 }

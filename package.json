@@ -58,7 +58,9 @@
         "axios": "^1.13.2",
         "better-sqlite3": "^12.6.2",
         "cli-table3": "^0.6.5",
-        "ora": "^9.0.0",
+        "detect-port": "^2.1.0",
+        "h3": "2.0.1-rc.11",
+        "srvx": "^0.10.1",
         "tsdown": "^0.15.4"
     },
     "devDependencies": {
