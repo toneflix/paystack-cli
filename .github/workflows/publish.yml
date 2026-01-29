@@ -6,6 +6,16 @@ on:
       - 'v*'
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (optional)'
+        required: false
+        default: ''
+      client_id:
+        description: 'GitHub App Client ID (optional)'
+        required: false
+        default: ''
 
 jobs:
   publish:
@@ -34,6 +44,9 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
@@ -41,13 +54,14 @@ jobs:
 
       - name: Check and bump version if needed
         id: version_check
+        if: ${{ github.event.inputs.version == '' }}
         run: |
           # Get current version from package.json
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current package.json version: $CURRENT_VERSION"
 
           # Get published version from npm (suppress errors if package doesn't exist)
-          PUBLISHED_VERSION=$(npm view @toneflix/paystack-cli version 2>/dev/null || echo "0.0.0")
+          PUBLISHED_VERSION=$(pnpm view @toneflix/paystack-cli version 2>/dev/null || echo "0.0.0")
           echo "Published npm version: $PUBLISHED_VERSION"
 
           # Function to compare versions
@@ -81,7 +95,7 @@ jobs:
             echo "New version: $NEW_VERSION"
             
             # Update package.json
-            npm version "$NEW_VERSION" --no-git-tag-version
+            pnpm version "$NEW_VERSION" --no-git-tag-version
             
             echo "version_bumped=true" >> $GITHUB_OUTPUT
             echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -98,8 +112,16 @@ jobs:
           git commit -m "chore: bump version to ${{ steps.version_check.outputs.new_version }} [skip ci]"
           git push origin HEAD:main
 
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+      - name: Set version from input
+        if: ${{ github.event.inputs.version != '' }}
+        run: |
+          echo "Setting version to ${{ github.event.inputs.version }}"
+          pnpm version "${{ github.event.inputs.version }}" --no-git-tag-version
+          echo "version_bumped=true" >> $GITHUB_OUTPUT
+          echo "new_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          git add package.json
+          git commit -m "chore: set version to ${{ github.event.inputs.version }} [skip ci]"
+          git push origin HEAD:main
 
       - name: Run linter
         run: pnpm lint
@@ -109,6 +131,8 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          GITHUB_CLIENT_ID: ${{ github.event.inputs.client_id || secrets.CLIENT_ID }}
 
       - name: Publish to NPM
         run: pnpm publish --no-git-checks
