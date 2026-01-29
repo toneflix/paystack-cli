@@ -7,6 +7,7 @@ import { InitCommand } from './Commands/InitCommand'
 import { Kernel } from '@h3ravel/musket'
 import { LoginCommand } from './Commands/LoginCommand'
 import { LogoutCommand } from './Commands/LogoutCommand'
+import { SetIntegrationCommand } from './Commands/SetIntegrationCommand'
 import { WebhookCommand } from './Commands/WebhookCommand'
 import { initAxios } from './axios'
 import logo from './logo'
@@ -30,6 +31,7 @@ Kernel.init(new Application(), {
         LogoutCommand,
         ConfigCommand,
         WebhookCommand,
+        SetIntegrationCommand,
         ...Commands(),
     ],
 })

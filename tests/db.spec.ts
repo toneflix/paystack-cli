@@ -1,13 +1,18 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { clear, init, keys, read, remove, useDb, write } from '../src/db'
-import { existsSync, unlinkSync } from 'fs'
+import { clear, init, keys, read, remove, useDb, useDbPath, write } from '../src/db'
+import { existsSync, mkdirSync, rmSync, unlinkSync } from 'fs'
 
-import Database from 'better-sqlite3'
+import path from 'path'
 
 describe('Database Test', () => {
+    const [_, setDbPath] = useDbPath()
+
+    mkdirSync('./tests/temp-db', { recursive: true })
+    setDbPath('./tests/temp-db')
+
     beforeAll(() => {
         const [_, setDatabase] = useDb()
-        setDatabase(new Database('testdb.db'))
+        setDatabase('testdb.db')
         init()
     })
 
@@ -16,10 +21,11 @@ describe('Database Test', () => {
     })
 
     afterAll(() => {
-        if (existsSync('testdb.db')) {
-            unlinkSync('testdb.db')
-            unlinkSync('testdb.db-shm')
-            unlinkSync('testdb.db-wal')
+        if (existsSync(path.join('tests/temp-db', 'testdb.db'))) {
+            unlinkSync(path.join('tests/temp-db', 'testdb.db'))
+            unlinkSync(path.join('tests/temp-db', 'testdb.db-shm'))
+            unlinkSync(path.join('tests/temp-db', 'testdb.db-wal'))
+            rmSync('./tests/temp-db', { recursive: true, force: true })
         }
     })
 

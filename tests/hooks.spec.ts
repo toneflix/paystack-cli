@@ -1,9 +1,9 @@
 import { Command, Kernel } from '@h3ravel/musket'
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { init, useDb } from 'src/db'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { existsSync, mkdirSync, rmSync, unlinkSync } from 'fs'
+import { init, useDb, useDbPath } from 'src/db'
 import { useCommand, useConfig, useShortcuts } from '../src/hooks'
 
-import Database from 'better-sqlite3'
 import path from 'path'
 
 class App {
@@ -13,19 +13,33 @@ class App {
 let app, program: any
 
 beforeAll(async () => {
+    const [__, setDbPath] = useDbPath()
     const [_, setDatabase] = useDb()
-    setDatabase(new Database('testdb.db'))
+
+    mkdirSync('./tests/temp-db', { recursive: true })
+    setDbPath('./tests/temp-db')
+    setDatabase('testdb.db')
     init()
+
     app = new App()
     program = await Kernel.init(
         app,
         {
-            packages: ['toneflix/paystack-cli'],
+            packages: ['ghit'],
             skipParsing: true,
             name: 'musket-cli',
             discoveryPaths: [path.join(process.cwd(), 'src/Commands/*.ts')]
         }
     )
+})
+
+afterAll(() => {
+    if (existsSync(path.join('tests/temp-db', 'testdb.db'))) {
+        unlinkSync(path.join('tests/temp-db', 'testdb.db'))
+        unlinkSync(path.join('tests/temp-db', 'testdb.db-shm'))
+        unlinkSync(path.join('tests/temp-db', 'testdb.db-wal'))
+        rmSync('./tests/temp-db', { recursive: true, force: true })
+    }
 })
 
 describe('Hooks Test', () => {

@@ -1,18 +1,17 @@
-import path, { dirname } from 'path'
-
 import Database from 'better-sqlite3'
 import { XGeneric } from './Contracts/Generic'
-import { fileURLToPath } from 'url'
+import { homedir } from 'os'
 import { mkdirSync } from 'fs'
+import path from 'path'
 
 let db: Database.Database
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const dirPath = path.normalize(path.join(__dirname, '..', 'data'))
-mkdirSync(dirPath, { recursive: true })
+let dbPath = path.join(homedir(), '.paystackcli')
 
+mkdirSync(dbPath, { recursive: true })
 
-export const useDbPath = () => [dirPath] as const
+export const useDbPath = () => [dbPath, (path: string) => {
+    dbPath = path
+}] as const
 
 /**
  * Hook to get or set the database instance.
@@ -22,8 +21,8 @@ export const useDbPath = () => [dirPath] as const
 export const useDb = () => {
     return [
         () => db,
-        (newDb: Database.Database) => {
-            db = newDb
+        (filename: string) => {
+            db = new Database(path.join(dbPath, filename))
 
             // Check current journal mode
             const [{ journal_mode }] = db.pragma('journal_mode') as [{ journal_mode: string }]
@@ -36,7 +35,7 @@ export const useDb = () => {
 
 const [getDatabase, setDatabase] = useDb()
 
-setDatabase(new Database(path.join(dirPath, 'app.db')))
+setDatabase('app.db')
 
 /**
  * Initialize the database
@@ -63,13 +62,13 @@ export function init () {
  * @param value 
  * @returns 
  */
-export function write (key: string, value: any,) {
+export function write<X = any> (key: string, value: X) {
     const db = getDatabase()
 
     if (typeof value === 'boolean')
-        value = value ? '1' : '0'
+        value = (value ? '1' : '0') as any
     if (value instanceof Object)
-        value = JSON.stringify(value)
+        value = JSON.stringify(value) as any
 
     const insert = db.prepare(`INSERT INTO json_store (key, value)
         VALUES (?, ?)
@@ -155,7 +154,7 @@ export function getData () {
  * @param key 
  * @returns 
  */
-export function read (key: string,): any {
+export function read<G = any> (key: string, defaultValue?: G): G {
     const db = getDatabase()
 
     try {
@@ -165,7 +164,7 @@ export function read (key: string,): any {
 
         if (row) {
             try {
-                return JSON.parse(row.value) as XGeneric
+                return JSON.parse(row.value) as G
             } catch {
                 return row.value
             }
@@ -173,5 +172,5 @@ export function read (key: string,): any {
 
     } catch { /** */ }
 
-    return null
+    return defaultValue ?? null as G
 } 

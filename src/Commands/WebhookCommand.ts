@@ -31,7 +31,9 @@ export class WebhookCommand extends Command {
         const user = read('user')?.id
 
         if (!selected_integration || !user)
-            return void this.error('ERROR: You\'re not signed in, please run the `login` command before you begin')
+            return void this.error(
+                `ERROR: You're not signed in, please run the ${logger('login', ['grey', 'italic'])} command before you begin`
+            )
 
         if (this.argument('command') == 'listen' && !local_route) {
             local_route = await this.ask(
