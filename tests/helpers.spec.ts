@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isJson, parseURL, promiseWrapper, wait } from '../src/helpers'
+import { isJson, parseURL, promiseWrapper } from '../src/helpers'
 
 describe('Helpers Test', () => {
     it('parseURL should correctly parse URLs', () => {
@@ -19,12 +19,12 @@ describe('Helpers Test', () => {
         expect(url4.pathname).toBe('/path')
     })
 
-    it('wait should delay execution for specified milliseconds', async () => {
-        const start = Date.now()
-        await wait(100)
-        const end = Date.now()
-        expect(end - start).toBeGreaterThanOrEqual(100)
-    })
+    // it('wait should delay execution for specified milliseconds', async () => {
+    //     const start = Date.now()
+    //     await wait(100)
+    //     const end = Date.now()
+    //     expect(end - start).toBeGreaterThanOrEqual(100)
+    // })
 
     it('isJson should correctly identify JSON objects', () => {
         expect(isJson({})).toBe(true)

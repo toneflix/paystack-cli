@@ -1,8 +1,9 @@
 # Paystack CLI
 
-[![npm version](https://img.shields.io/npm/v/@toneflix/paystack-cli.svg)](https://www.npmjs.com/package/@toneflix/paystack-cli)
-[![License](https://img.shields.io/npm/l/@toneflix/paystack-cli.svg)](https://github.com/toneflix/paystack-cli/blob/main/LICENSE)
-[![CI](https://github.com/toneflix/paystack-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/toneflix/paystack-cli/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@toneflix/paystack-cli.svg?label=npm+version&style=flat-square)](https://www.npmjs.com/package/@toneflix/paystack-cli)
+[![npm downloads](https://img.shields.io/npm/dt/%40toneflix%2Fpaystack-cli?style=flat-square)](https://www.npmjs.com/package/@toneflix/paystack-cli)
+[![GitHub License](https://img.shields.io/github/license/toneflix/paystack-cli?style=flat-square)](https://github.com/toneflix/paystack-cli/blob/main/LICENSE)
+[![CI](https://github.com/toneflix/paystack-cli/actions/workflows/ci.yml/badge.svg?label=Tests)](https://github.com/toneflix/paystack-cli/actions/workflows/ci.yml)
 [![Deploy Docs](https://github.com/toneflix/paystack-cli/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/toneflix/paystack-cli/actions/workflows/deploy-docs.yml)
 
 The Paystack CLI helps you build, test, and manage your Paystack integration right from the terminal. Interact with the Paystack API, test webhooks locally, and manage your integration settings without leaving your command line.
