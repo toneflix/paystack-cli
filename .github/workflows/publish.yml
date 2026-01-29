@@ -12,10 +12,6 @@ on:
         description: 'Version to publish (optional)'
         required: false
         default: ''
-      client_id:
-        description: 'GitHub App Client ID (optional)'
-        required: false
-        default: ''
 
 jobs:
   publish:
@@ -131,8 +127,6 @@ jobs:
 
       - name: Build project
         run: pnpm build
-        env:
-          GITHUB_CLIENT_ID: ${{ github.event.inputs.client_id || secrets.CLIENT_ID }}
 
       - name: Publish to NPM
         run: pnpm publish --no-git-checks
