@@ -2,11 +2,10 @@ import * as db from './db'
 
 import { IIntegration, ILogin, IResponse } from './Contracts/Interfaces.js'
 import { XEvent, XGeneric } from './Contracts/Generic.js'
+import { logger, promiseWrapper } from './helpers'
 
-import { AxiosError } from 'axios'
 import api from './axios.js'
 import crypto from 'crypto'
-import { promiseWrapper } from './helpers'
 import { useCommand } from './hooks.js'
 import webhookSamples from './paystack/webhooks'
 
@@ -173,6 +172,57 @@ export function getKeys (token: string, type = 'secret', domain = 'test') {
 }
 
 /**
+ * Modify payload before sending
+ * 
+ * @param eventObject 
+ * @param deep 
+ * @returns 
+ */
+const modifyPayload = async (eventObject: XGeneric, deep = 0) => {
+    const [command] = useCommand()
+    const cmd = command()
+    const data = { ...eventObject }
+
+    for (const [key, val] of Object.entries(data)) {
+        if (['string', 'number'].includes(typeof val)) {
+            data[key] = await cmd.ask(`Enter new value for '${key}':`, String(val))
+        } else if (typeof val === 'boolean') {
+            data[key] = (await cmd.choice(
+                `Enter new value for '${key}':`, ['true', 'false'], val ? 0 : 1)
+            ) === 'true'
+        } else if (typeof val === 'object' && val !== null && deep < 1) {
+            // Nested object - ask if the user wants to modify its properties
+            const modifyNested = await cmd.confirm(`Do you want to modify properties of '${key}' object?`, false)
+
+            if (modifyNested) {
+                data[key] = await modifyPayload(data[key], deep + 1)
+
+                // Ask if the user wants to add a property
+                const addMore = await cmd.ask(
+                    `Would you like to add a few more properties to '${key}'? (Enter ${logger('0', 'cyan')} to skip, or any other number for the number of properties to add)`, '0'
+                )
+
+                const addMoreNumber = Number(addMore)
+
+                if (!isNaN(addMoreNumber) && addMoreNumber > 0) {
+                    for (let i = 0; i < addMoreNumber; i++) {
+                        const newPropKey = await cmd.ask(`Enter the key for property ${i + 1}:`)
+                        const newPropValue = await cmd.ask(`Enter the value for property '${newPropKey}':`)
+                        data[key][newPropKey] = newPropValue
+                    }
+                }
+            } else {
+                continue
+            }
+        } else {
+            continue
+        }
+    }
+
+    return data
+}
+
+/**
  * Ping webhook URL
  * 
  * @param options 
@@ -208,16 +258,7 @@ export async function pingWebhook (options: XGeneric, event: XEvent = 'charge.su
     if (eventObject) {
         // Modify payload before sending
         if (options.mod) {
-            for (const [key, val] of Object.entries(eventObject.data)) {
-                if (['string', 'number'].includes(typeof val))
-                    eventObject.data[key] = await cmd.ask(`Enter new value for '${key}':`, String(val))
-                else if (typeof val === 'boolean')
-                    eventObject.data[key] = (await cmd.choice(
-                        `Enter new value for '${key}':`, ['true', 'false'], val ? 0 : 1)
-                    ) === 'true'
-                else
-                    continue
-            }
+            eventObject.data = await modifyPayload(eventObject.data)
         }
 
         const hash = crypto.createHmac('sha512', key).update(JSON.stringify(eventObject)).digest('hex')
