@@ -902,6 +902,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - Built with [H3ravel Musket](https://github.com/h3ravel/musket)
 - Powered by [Paystack](https://paystack.com)
 - Tunneling by [ngrok](https://ngrok.com)
+- Dev Server from [H3](https://h3.dev)
 
 ---
 

@@ -255,6 +255,7 @@ export async function pingWebhook (options: XGeneric, event: XEvent = 'charge.su
     if (!canProceed) return void cmd.error('ERROR: Unable to ping webhook URL')
 
     const eventObject = webhookSamples[event]
+
     if (eventObject) {
         // Modify payload before sending
         if (options.mod) {
@@ -266,7 +267,7 @@ export async function pingWebhook (options: XGeneric, event: XEvent = 'charge.su
 
         const spinner = cmd.spinner(`Sending sample ${event} event payload to ${uri}`).start()
         try {
-            const response = await api.post(uri, eventObject, {
+            const response = await api.post(options.forward ?? uri, eventObject, {
                 headers: {
                     'x-paystack-signature': hash,
                 },
