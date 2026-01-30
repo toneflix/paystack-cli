@@ -73,9 +73,9 @@ $ paystack-cli webhook listen http://localhost:3000/webhook
 
 ✓ Tunnelling webhook events to http://localhost:3000/webhook
 
-INFO: Listening for incoming webhook events at: http://localhost:3000/webhook
-INFO: Webhook URL set to: https://abc123.ngrok-free.app/webhook for test domain
-INFO: Press Ctrl+C to stop listening for webhook events.
+✓ INFO: Listening for incoming webhook events at: http://localhost:3000/webhook
+✓ INFO: Webhook URL set to: https://abc123.ngrok-free.app/webhook for test domain
+✓ INFO: Press Ctrl+C to stop listening for webhook events.
 ```
 
 ## Testing Webhooks
@@ -157,17 +157,11 @@ The CLI supports testing these webhook events:
 | `customeridentification.success` | Successful customer identification attempt |
 | `dedicatedaccount.assign.failed` | Failed DVA assignmenment attempt           |
 
-Use the `--serve` flag to start a simple HTTP server:
-
-```bash
-paystack-cli webhook listen --serve
-```
-
-This starts a server on port 3000 and creates an ngrok tunnel automatically. Perfect for quick testing without setting up your own server.
-
 ::: tip
-You can test any of these events without a running listener by using the `--forward` option to send to a specific URL.
+You can test any of these events without a running listener by using the `--forward` option with `webhook ping` to send to a specific URL.
 :::
+
+## Advanced Options
 
 ### Specify Domain
 
@@ -181,7 +175,7 @@ paystack-cli webhook listen http://localhost:3000/webhook --domain=test
 paystack-cli webhook listen http://localhost:3000/webhook --domain=live
 ```
 
-### Forward to Specific URL (Ping Only)
+### Forward to Specific URL
 
 When using `webhook ping`, override the saved webhook URL:
 
@@ -193,24 +187,9 @@ paystack-cli webhook ping \
 
 This sends the webhook to the specified URL instead of the configured webhook endpoint.
 
-### Modify Webhook Payload (Ping Only)
-
-Interactively modify webhook data before sending:
-
-```bash
-paystack-cli webhook ping --event=charge.success --mod
-```
-
-You'll be prompted to:
-
-1. Change existing field values
-2. Modify nested object properties
-3. Add custom properties to objects
-
-```bash
-paystack-cli webhook listen http://localhost:3000/webhook \
-  --forward=https://your-custom-url.com/webhook
-```
+::: warning
+The `--forward` option only works with `webhook ping`, not with `webhook listen`.
+:::
 
 ### Custom Ngrok Domain
 
@@ -221,24 +200,7 @@ export NGROK_DOMAIN="your-subdomain.ngrok.io"
 paystack-cli webhook listen http://localhost:3000/webhook
 ```
 
-## Webhook Handler Example
-
-Here's an example Express.js webhook handler:
-
-````javascript
-const express = require('express');
-const crypto = require('crypto');
-
-const app = express();
-app.use(express.json());
-
-app.post('/webhook', (req, res) => {
-  // Verify webhook signature
-  const hash = crypto
-    .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
-    .update(JSON.stringify(req.body))
-    .digest('hex');
-Command Reference
+## Command Reference
 
 ### webhook listen
 
@@ -246,7 +208,7 @@ Start webhook listener and create ngrok tunnel.
 
 ```bash
 paystack-cli webhook listen [url] [options]
-````
+```
 
 **Arguments:**
 
@@ -255,7 +217,6 @@ paystack-cli webhook listen [url] [options]
 **Options:**
 
 - `--domain, -D` - Domain to use (test/live) - Default: `test`
-- `--forward, -F` - Forward webhook to specific URL instead of saved webhook
 - `--serve, -S` - Start a built-in server on port 3000
 
 **Examples:**
@@ -305,6 +266,53 @@ paystack-cli webhook ping --event=charge.success --mod
 paystack-cli webhook ping
 ```
 
+## Webhook Handler Example
+
+Here's an example Express.js webhook handler:
+
+```javascript
+const express = require('express');
+const crypto = require('crypto');
+
+const app = express();
+app.use(express.json());
+
+app.post('/webhook', (req, res) => {
+  // Verify webhook signature
+  const hash = crypto
+    .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+
+  if (hash === req.headers['x-paystack-signature']) {
+    // Process the event
+    const event = req.body;
+
+    console.log('Event:', event.event);
+    console.log('Data:', event.data);
+
+    // Handle different event types
+    switch (event.event) {
+      case 'charge.success':
+        // Handle successful charge
+        break;
+      case 'transfer.success':
+        // Handle successful transfer
+        break;
+      // ... other events
+    }
+
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(400);
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Webhook server listening on port 3000');
+});
+```
+
 ## Troubleshooting
 
 ### "Ngrok token not configured"
@@ -323,7 +331,7 @@ paystack-cli config
 - Stop the process using that port
 - Use a different port in your local route
 - Use `--serve` flag which automatically uses port 3000
-- Kill existing ngrok process and try again
+- Kill existing ngrok process: `pkill ngrok`
 
 ### Webhook not received
 
@@ -348,39 +356,9 @@ paystack-cli login
 **Solution:**
 
 1. Verify your ngrok auth token is correct
-2. Kill any existing ngrok processes
+2. Kill any existing ngrok processes: `pkill ngrok`
 3. Check your internet connection
-4. Try updating ngrok: `npm update -g @ngrok/ngrokSolution:\*\* Configure your ngrok auth token
-
-```bash
-paystack-cli config
-# Select "Ngrok Auth Token" and enter your token
-```
-
-### "Port already in use"
-
-**Solution:** Either:
-
-- Stop the process using that port
-- Use a different port in your local route
-- Kill existing ngrok process: `pkill ngrok`
-
-### Webhook not received
-
-**Checklist:**
-
-1. Is the listener running? Check terminal output
-2. Is your local server running on the specified port?
-3. Is the route correct? (e.g., `/webhook` not `/webhooks`)
-4. Check firewall/antivirus settings
-
-### "Session expired"
-
-**Solution:** Your CLI session expired, login again:
-
-```bash
-paystack-cli login
-```
+4. Try updating ngrok: `npm update -g @ngrok/ngrok`
 
 ## Best Practices
 
