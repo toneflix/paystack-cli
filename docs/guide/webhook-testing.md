@@ -157,8 +157,6 @@ The CLI supports testing these webhook events:
 | `customeridentification.success` | Successful customer identification attempt |
 | `dedicatedaccount.assign.failed` | Failed DVA assignmenment attempt           |
 
-| `detart Built-in Server
-
 Use the `--serve` flag to start a simple HTTP server:
 
 ```bash
